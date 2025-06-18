@@ -1541,7 +1541,7 @@
                     <i class="fas fa-brain"></i>
                 </div>
                 <h3 class="feature-title">AI ที่ชาญฉลาด</h3>
-                <p class="feature-description">ใช้โมเดล Deep Learning ที่ผ่านการฝึกอบรมด้วยข้อมูลดินกว่า 180 ตัวอย่าง</p>
+                <p class="feature-description">ใช้โมเดล Deep Learning ที่ผ่านการฝึกอบรมด้วยข้อมูลดินกว่า 1,000 ตัวอย่าง</p>
             </div>
             <div class="feature-card animate-slideInUp">
                 <div class="feature-icon">
@@ -1563,12 +1563,12 @@
         <section class="stats-grid">
             <div class="stat-card">
                 <i class="fas fa-chart-line stat-icon"></i>
-                <div class="stat-value" id="accuracyStat">88.9%</div>
+                <div class="stat-value" id="accuracyStat">0%</div>
                 <div class="stat-label">ความแม่นยำ</div>
             </div>
             <div class="stat-card">
                 <i class="fas fa-images stat-icon"></i>
-                <div class="stat-value" id="imagesStat">180</div>
+                <div class="stat-value" id="imagesStat">0</div>
                 <div class="stat-label">รูปที่ใช้ฝึก</div>
             </div>
             <div class="stat-card">
@@ -2038,7 +2038,7 @@
                 
                 // Update stats
                 animateValue('accuracyStat', 0, 96, 2000);
-                animateValue('imagesStat', 0, 1250, 2000);
+                animateValue('imagesStat', 0, 180, 2000);
                 
             } catch (error) {
                 console.error('Critical error loading model:', error);
