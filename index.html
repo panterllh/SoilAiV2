@@ -753,133 +753,37 @@
                 setTimeout(() => screen.style.display = 'none', 300);
             }
             
-            // Model initialization with proper error handling
+            // Model initialization
             async function initializeModel() {
-                console.log('Starting model initialization...');
-                
-                // Wait for TensorFlow.js to load
-                let attempts = 0;
-                while (typeof tf === 'undefined' && attempts < 10) {
-                    console.log('Waiting for TensorFlow.js...');
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    attempts++;
-                }
-                
                 if (typeof tf === 'undefined') {
-                    console.error('TensorFlow.js failed to load');
-                    useMockModel();
+                    console.error('TensorFlow.js not loaded');
+                    setTimeout(initializeModel, 1000);
                     return;
                 }
                 
                 try {
-                    // Wait for backend to be ready
-                    await tf.ready();
-                    console.log('TensorFlow.js backend ready:', tf.getBackend());
-                    
-                    // Try to load real model first
-                    try {
-                        // Option 1: Load from URL (if you have a hosted model)
-                        // window.SoilAI.model = await tf.loadLayersModel('/model/model.json');
-                        
-                        // Option 2: Create a simple model for demo
-                        window.SoilAI.model = createSimpleModel();
-                        console.log('Model created successfully');
-                        
-                    } catch (modelError) {
-                        console.warn('Using mock model due to:', modelError);
-                        useMockModel();
-                    }
+                    // Simple mock model
+                    window.SoilAI.model = {
+                        predict: function(tensor) {
+                            return {
+                                data: async function() {
+                                    await new Promise(r => setTimeout(r, 1000));
+                                    const rand = Math.random();
+                                    if (rand < 0.33) return [0.85, 0.10, 0.05];
+                                    if (rand < 0.66) return [0.10, 0.85, 0.05];
+                                    return [0.05, 0.10, 0.85];
+                                }
+                            };
+                        }
+                    };
                     
                     window.SoilAI.isReady = true;
-                    showToast('ระบบพร้อมใช้งาน', 'success');
+                    console.log('Model initialized');
                     
                 } catch (error) {
-                    console.error('TensorFlow initialization error:', error);
-                    useMockModel();
+                    console.error('Model init error:', error);
+                    window.SoilAI.isReady = true; // Use mock anyway
                 }
-            }
-            
-            // Create a simple demo model
-            function createSimpleModel() {
-                // Create a simple sequential model
-                const model = tf.sequential({
-                    layers: [
-                        tf.layers.conv2d({
-                            inputShape: [224, 224, 3],
-                            kernels: 8,
-                            kernelSize: 3,
-                            activation: 'relu'
-                        }),
-                        tf.layers.maxPooling2d({ poolSize: 2 }),
-                        tf.layers.flatten(),
-                        tf.layers.dense({ units: 3, activation: 'softmax' })
-                    ]
-                });
-                
-                // Return a wrapper that handles predictions safely
-                return {
-                    predict: function(input) {
-                        try {
-                            // For demo, return random predictions
-                            const result = tf.tidy(() => {
-                                const rand = Math.random();
-                                let probs;
-                                if (rand < 0.33) {
-                                    probs = tf.tensor2d([[0.85, 0.10, 0.05]]);
-                                } else if (rand < 0.66) {
-                                    probs = tf.tensor2d([[0.10, 0.85, 0.05]]);
-                                } else {
-                                    probs = tf.tensor2d([[0.05, 0.10, 0.85]]);
-                                }
-                                return probs;
-                            });
-                            
-                            return {
-                                data: async () => {
-                                    const data = await result.data();
-                                    result.dispose();
-                                    return data;
-                                }
-                            };
-                        } catch (e) {
-                            console.error('Prediction error:', e);
-                            return {
-                                data: async () => [0.33, 0.33, 0.34]
-                            };
-                        }
-                    },
-                    dispose: function() {
-                        if (model && model.dispose) {
-                            model.dispose();
-                        }
-                    }
-                };
-            }
-            
-            // Fallback mock model
-            function useMockModel() {
-                console.log('Using mock model (no TensorFlow.js)');
-                window.SoilAI.model = {
-                    predict: function(tensor) {
-                        // Clean up tensor if it exists
-                        if (tensor && tensor.dispose) {
-                            tensor.dispose();
-                        }
-                        
-                        return {
-                            data: async function() {
-                                await new Promise(r => setTimeout(r, 1000));
-                                const rand = Math.random();
-                                if (rand < 0.33) return [0.85, 0.10, 0.05];
-                                if (rand < 0.66) return [0.10, 0.85, 0.05];
-                                return [0.05, 0.10, 0.85];
-                            }
-                        };
-                    }
-                };
-                
-                window.SoilAI.isReady = true;
-                showToast('ใช้โหมดทดสอบ', 'info');
             }
             
             // Event listeners
@@ -936,10 +840,10 @@
                 reader.readAsDataURL(file);
             }
             
-            // Analysis with better error handling
+            // Analysis
             window.analyzeImage = async function() {
                 if (!window.SoilAI.isReady) {
-                    showToast('ระบบยังไม่พร้อม กรุณารอสักครู่', 'error');
+                    showToast('ระบบยังไม่พร้อม', 'error');
                     return;
                 }
                 
@@ -951,80 +855,38 @@
                 document.getElementById('uploadLoading').classList.remove('hidden');
                 document.getElementById('analyzeBtn').disabled = true;
                 
-                let tensor = null;
-                
                 try {
+                    // Create tensor
                     const img = document.getElementById('previewImage');
+                    const tensor = tf.browser.fromPixels(img)
+                        .resizeBilinear([224, 224])
+                        .div(255.0)
+                        .expandDims(0);
                     
-                    // Check if TensorFlow is available
-                    if (typeof tf !== 'undefined' && tf.browser && tf.browser.fromPixels) {
-                        // Create tensor with error handling
-                        tensor = tf.tidy(() => {
-                            return tf.browser.fromPixels(img)
-                                .resizeBilinear([224, 224])
-                                .div(255.0)
-                                .expandDims(0);
-                        });
-                        
-                        // Predict
-                        const predictions = await window.SoilAI.model.predict(tensor).data();
-                        
-                        // Get result
-                        const maxIndex = predictions.indexOf(Math.max(...predictions));
-                        const result = {
-                            type: maxIndex,
-                            confidence: predictions[maxIndex],
-                            data: soilTypes[maxIndex],
-                            timestamp: new Date()
-                        };
-                        
-                        window.SoilAI.currentResult = result;
-                        displayResult(result);
-                        showToast('วิเคราะห์เสร็จสิ้น', 'success');
-                        
-                    } else {
-                        // Fallback if TensorFlow not available
-                        console.log('Using fallback analysis');
-                        await new Promise(r => setTimeout(r, 1500));
-                        
-                        const mockIndex = Math.floor(Math.random() * 3);
-                        const mockConfidence = 0.7 + Math.random() * 0.25;
-                        
-                        const result = {
-                            type: mockIndex,
-                            confidence: mockConfidence,
-                            data: soilTypes[mockIndex],
-                            timestamp: new Date()
-                        };
-                        
-                        window.SoilAI.currentResult = result;
-                        displayResult(result);
-                        showToast('วิเคราะห์เสร็จสิ้น (โหมดทดสอบ)', 'success');
-                    }
+                    // Predict
+                    const predictions = await window.SoilAI.model.predict(tensor).data();
+                    tensor.dispose();
+                    
+                    // Get result
+                    const maxIndex = predictions.indexOf(Math.max(...predictions));
+                    const result = {
+                        type: maxIndex,
+                        confidence: predictions[maxIndex],
+                        data: soilTypes[maxIndex],
+                        timestamp: new Date()
+                    };
+                    
+                    window.SoilAI.currentResult = result;
+                    displayResult(result);
+                    showToast('วิเคราะห์เสร็จสิ้น', 'success');
                     
                 } catch (error) {
                     console.error('Analysis error:', error);
-                    showToast('เกิดข้อผิดพลาดในการวิเคราะห์', 'error');
+                    showToast('เกิดข้อผิดพลาด', 'error');
                 } finally {
-                    // Always clean up
-                    if (tensor) {
-                        tensor.dispose();
-                    }
-                    
                     window.SoilAI.analyzing = false;
                     document.getElementById('uploadLoading').classList.add('hidden');
                     document.getElementById('analyzeBtn').disabled = false;
-                    
-                    // Check memory usage
-                    if (typeof tf !== 'undefined' && tf.memory) {
-                        const memInfo = tf.memory();
-                        console.log('Memory:', memInfo);
-                        
-                        // Clean up if too many tensors
-                        if (memInfo.numTensors > 10) {
-                            tf.disposeVariables();
-                        }
-                    }
                 }
             };
             
