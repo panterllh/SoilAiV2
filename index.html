@@ -9,8 +9,8 @@
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     
-    <!-- TensorFlow.js - Load First -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+    <!-- TensorFlow.js - Load with specific version that works -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0"></script>
     
     <!-- jsPDF for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1741,7 +1741,7 @@
                     <button class="btn btn-danger" onclick="clearHistory()">
                         <i class="fas fa-trash"></i> ล้างประวัติ
                     </button>
-                        </div>
+                </div>
                 
                 <div id="historyContent">
                     <p class="text-center" style="color: var(--text-light);">ยังไม่มีประวัติการวิเคราะห์</p>
@@ -1821,6 +1821,7 @@
         let analysisHistory = [];
         let analyzeCount = 0;
         let isModelReady = false;
+        let isTensorFlowReady = false;
         
         // Soil type data
         const soilTypes = {
@@ -1913,48 +1914,45 @@
             }
         };
         
-        // Initialize with cleanup
-        window.onload = async function() {
-            // Check and clean storage first
-            await checkAndCleanStorage();
-            
-            showPreloader();
-            await initializeApp();
-        };
-        
-        async function checkAndCleanStorage() {
-            try {
-                // Check storage size
-                const storageEstimate = await navigator.storage.estimate();
-                const usedMB = (storageEstimate.usage / 1024 / 1024).toFixed(2);
-                const quotaMB = (storageEstimate.quota / 1024 / 1024).toFixed(2);
-                
-                console.log(`Storage: ${usedMB} MB / ${quotaMB} MB used`);
-                
-                // If using more than 50MB, clean up
-                if (storageEstimate.usage > 50 * 1024 * 1024) {
-                    console.log('Cleaning up storage...');
-                    clearOldData();
+        // Wait for TensorFlow.js to be ready
+        function waitForTensorFlow() {
+            return new Promise((resolve) => {
+                if (typeof tf !== 'undefined') {
+                    resolve();
+                } else {
+                    setTimeout(() => {
+                        waitForTensorFlow().then(resolve);
+                    }, 100);
                 }
-            } catch (e) {
-                console.log('Cannot check storage:', e);
-            }
+            });
         }
         
+        // Initialize app with proper error handling
         async function initializeApp() {
             try {
                 // Update preloader progress
+                updatePreloaderProgress(10);
+                
+                // Wait for TensorFlow.js
+                await waitForTensorFlow();
+                console.log('TensorFlow.js loaded:', tf.version.tfjs);
+                isTensorFlowReady = true;
                 updatePreloaderProgress(20);
+                
+                // Set backend before loading model
+                await tf.ready();
+                console.log('TensorFlow backend:', tf.getBackend());
+                updatePreloaderProgress(30);
                 
                 // Load theme
                 checkTheme();
-                updatePreloaderProgress(30);
+                updatePreloaderProgress(40);
                 
                 // Setup event listeners
                 setupEventListeners();
-                updatePreloaderProgress(40);
+                updatePreloaderProgress(50);
                 
-                // Load model
+                // Load model with proper error handling
                 await loadModel();
                 updatePreloaderProgress(80);
                 
@@ -1975,7 +1973,42 @@
             } catch (error) {
                 console.error('Initialization error:', error);
                 hidePreloader();
-                showToast('เกิดข้อผิดพลาดในการเริ่มระบบ', 'error');
+                
+                // Still allow app to function with mock model
+                model = createMockModel();
+                isModelReady = true;
+                
+                showToast('ระบบทำงานในโหมดจำลอง', 'info');
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check and clean storage first
+            await checkAndCleanStorage();
+            
+            showPreloader();
+            await initializeApp();
+        });
+        
+        async function checkAndCleanStorage() {
+            try {
+                // Check storage size
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const storageEstimate = await navigator.storage.estimate();
+                    const usedMB = (storageEstimate.usage / 1024 / 1024).toFixed(2);
+                    const quotaMB = (storageEstimate.quota / 1024 / 1024).toFixed(2);
+                    
+                    console.log(`Storage: ${usedMB} MB / ${quotaMB} MB used`);
+                    
+                    // If using more than 50MB, clean up
+                    if (storageEstimate.usage > 50 * 1024 * 1024) {
+                        console.log('Cleaning up storage...');
+                        clearOldData();
+                    }
+                }
+            } catch (e) {
+                console.log('Cannot check storage:', e);
             }
         }
         
@@ -1996,9 +2029,14 @@
             document.getElementById('preloaderBar').style.width = percent + '%';
         }
         
-        // Load TensorFlow model
+        // Load TensorFlow model with better error handling
         async function loadModel() {
             try {
+                // Check if TensorFlow is ready
+                if (!isTensorFlowReady) {
+                    throw new Error('TensorFlow.js not ready');
+                }
+                
                 // Update preloader text
                 document.querySelector('.preloader-text').textContent = 'กำลังโหลด AI Model...';
                 
@@ -2081,17 +2119,18 @@
                             await new Promise(resolve => setTimeout(resolve, 1500));
                             
                             // Get image data for simple analysis
-                            const imageData = tensor.arraySync()[0];
+                            const imageData = await tensor.array();
+                            const pixelData = imageData[0];
                             
                             // Calculate average colors
                             let rAvg = 0, gAvg = 0, bAvg = 0;
                             let pixelCount = 0;
                             
-                            for (let i = 0; i < imageData.length; i++) {
-                                for (let j = 0; j < imageData[i].length; j++) {
-                                    rAvg += imageData[i][j][0];
-                                    gAvg += imageData[i][j][1];
-                                    bAvg += imageData[i][j][2];
+                            for (let i = 0; i < pixelData.length; i++) {
+                                for (let j = 0; j < pixelData[i].length; j++) {
+                                    rAvg += pixelData[i][j][0];
+                                    gAvg += pixelData[i][j][1];
+                                    bAvg += pixelData[i][j][2];
                                     pixelCount++;
                                 }
                             }
@@ -2137,7 +2176,6 @@
                 }
             };
         }
-
 
         // Animate number values
         function animateValue(id, start, end, duration) {
@@ -2266,11 +2304,6 @@
                 return;
             }
             
-            if (!isTensorFlowReady) {
-                showMessage('TensorFlow.js ยังไม่พร้อม กรุณารอสักครู่', 'error');
-                return;
-            }
-            
             // Check storage quota
             if (!await checkStorageQuota()) {
                 clearOldData();
@@ -2326,9 +2359,7 @@
                 }
                 
                 // Clean up TensorFlow memory
-                if (tf && tf.disposeVariables) {
-                    tf.disposeVariables();
-                }
+                tf.disposeVariables();
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('analyzeBtn').style.display = 'inline-flex';
@@ -2591,34 +2622,14 @@
                 return;
             }
             
-            try {
-                // Create compressed version for history
-                const compressedResult = {
-                    ...window.currentResult,
-                    imageData: null, // Don't save image in history
-                    timestamp: window.currentResult.timestamp || new Date()
-                };
-                
-                analysisHistory.push(compressedResult);
-                
-                // Keep only last 20 records
-                if (analysisHistory.length > 20) {
-                    analysisHistory = analysisHistory.slice(-20);
-                }
-                
-                saveHistoryToStorage();
-                updateHistoryView();
-                
-                showToast('บันทึกผลการวิเคราะห์แล้ว', 'success');
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    showMessage('พื้นที่เก็บข้อมูลเต็ม กรุณาล้างประวัติเก่า', 'error');
-                    clearOldData();
-                }
-            }
+            analysisHistory.push(window.currentResult);
+            saveHistory();
+            updateHistoryView();
+            
+            showToast('บันทึกผลการวิเคราะห์แล้ว', 'success');
         }
         
-        function saveHistoryToStorage() {
+        function saveHistory() {
             localStorage.setItem('soilAnalysisHistory', JSON.stringify(analysisHistory));
         }
         
@@ -2677,7 +2688,7 @@
         function clearHistory() {
             if (confirm('ต้องการล้างประวัติทั้งหมดหรือไม่?')) {
                 analysisHistory = [];
-                saveHistoryToStorage();
+                saveHistory();
                 updateHistoryView();
                 showToast('ล้างประวัติแล้ว', 'success');
             }
@@ -3041,6 +3052,40 @@
             }
         }
         
+        // Save to history with compression
+        function saveToHistory() {
+            if (!window.currentResult) {
+                showMessage('ไม่มีผลการวิเคราะห์', 'error');
+                return;
+            }
+            
+            try {
+                // Create compressed version for history
+                const compressedResult = {
+                    ...window.currentResult,
+                    imageData: null, // Don't save image in history
+                    timestamp: window.currentResult.timestamp
+                };
+                
+                analysisHistory.push(compressedResult);
+                
+                // Keep only last 20 records
+                if (analysisHistory.length > 20) {
+                    analysisHistory = analysisHistory.slice(-20);
+                }
+                
+                saveHistory();
+                updateHistoryView();
+                
+                showToast('บันทึกผลการวิเคราะห์แล้ว', 'success');
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    showMessage('พื้นที่เก็บข้อมูลเต็ม กรุณาล้างประวัติเก่า', 'error');
+                    clearOldData();
+                }
+            }
+        }
+        
         // ============================================
         // Error Handling
         // ============================================
@@ -3048,7 +3093,7 @@
             console.error('Global error:', e);
             
             // Don't show error for tensor disposal warnings
-            if (e.message && !e.message.includes('Tensor is disposed')) {
+            if (!e.message || !e.message.includes('Tensor is disposed')) {
                 showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
             }
         });
@@ -3061,6 +3106,14 @@
         window.addEventListener('online', () => {
             showToast('กลับมาออนไลน์แล้ว', 'success');
         });
+        
+        // Check TensorFlow.js availability
+        if (typeof tf === 'undefined') {
+            console.error('TensorFlow.js not loaded');
+            showToast('ไม่สามารถโหลด TensorFlow.js', 'error');
+        } else {
+            console.log('TensorFlow.js version:', tf.version.tfjs);
+        }
     </script>
 </body>
 </html>
