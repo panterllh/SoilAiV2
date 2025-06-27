@@ -1813,6 +1813,112 @@
     
     <script>
         // ============================================
+        // Utility Functions - Move to top
+        // ============================================
+        
+        // Animate number values
+        function animateValue(id, start, end, duration) {
+            const element = document.getElementById(id);
+            if (!element) return; // Check if element exists
+            
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                
+                if (id === 'accuracyStat') {
+                    element.textContent = Math.floor(current) + '%';
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 16);
+        }
+        
+        function showMessage(message, type) {
+            hideMessage();
+            
+            let element;
+            if (type === 'error') {
+                element = document.getElementById('errorMessage');
+            } else if (type === 'success') {
+                element = document.getElementById('successMessage');
+            }
+            
+            if (element && element.querySelector) {
+                const span = element.querySelector('span');
+                if (span) {
+                    span.textContent = message;
+                    element.style.display = 'flex';
+                    
+                    // Auto hide after 5 seconds
+                    setTimeout(hideMessage, 5000);
+                }
+            } else {
+                // Fallback to toast if elements not found
+                console.error('Message elements not found, using toast instead');
+                showToast(message, type);
+            }
+        }
+        
+        function hideMessage() {
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+            if (successElement) {
+                successElement.style.display = 'none';
+            }
+        }
+        
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) {
+                console.error('Toast container not found');
+                return;
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            else if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            toast.innerHTML = `
+                <i class="fas ${icon} toast-icon"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => {
+                    if (container.contains(toast)) {
+                        container.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        function updateStats() {
+            const element = document.getElementById('analyzeCount');
+            if (element) {
+                element.textContent = analyzeCount;
+            }
+        }
+        
+        // ============================================
         // Global Variables
         // ============================================
         let model = null;
@@ -3112,87 +3218,43 @@ project-folder/
             
             // Update icon with animation
             const icon = document.getElementById('themeIcon');
-            icon.style.transform = 'rotate(180deg)';
-            setTimeout(() => {
-                icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-                icon.style.transform = 'rotate(0deg)';
-            }, 150);
+            if (icon) {
+                icon.style.transform = 'rotate(180deg)';
+                setTimeout(() => {
+                    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+                    icon.style.transform = 'rotate(0deg)';
+                }, 150);
+            }
         }
         
         function checkTheme() {
             if (localStorage.getItem('darkMode') === 'true') {
                 document.body.classList.add('dark-mode');
-                document.getElementById('themeIcon').className = 'fas fa-sun';
+                const icon = document.getElementById('themeIcon');
+                if (icon) {
+                    icon.className = 'fas fa-sun';
+                }
             }
         }
         
         // ============================================
-        // Utility Functions
+        // Other Utility Functions
         // ============================================
         function resetUpload() {
-            document.getElementById('imageInput').value = '';
-            document.getElementById('previewContainer').style.display = 'none';
-            document.getElementById('analyzeBtn').style.display = 'none';
-            document.getElementById('resultDisplay').style.display = 'none';
-            document.getElementById('emptyResult').style.display = 'block';
+            const imageInput = document.getElementById('imageInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resultDisplay = document.getElementById('resultDisplay');
+            const emptyResult = document.getElementById('emptyResult');
+            
+            if (imageInput) imageInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (analyzeBtn) analyzeBtn.style.display = 'none';
+            if (resultDisplay) resultDisplay.style.display = 'none';
+            if (emptyResult) emptyResult.style.display = 'block';
             
             hideMessage();
             showToast('รีเซ็ตแล้ว', 'info');
-        }
-        
-        function updateStats() {
-            document.getElementById('analyzeCount').textContent = analyzeCount;
-        }
-        
-        function showMessage(message, type) {
-            hideMessage();
-            
-            let element;
-            if (type === 'error') {
-                element = document.getElementById('errorMessage');
-            } else if (type === 'success') {
-                element = document.getElementById('successMessage');
-            }
-            
-            if (element) {
-                element.querySelector('span').textContent = message;
-                element.style.display = 'flex';
-                
-                // Auto hide after 5 seconds
-                setTimeout(hideMessage, 5000);
-            }
-        }
-        
-        function hideMessage() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-        
-        // Toast notifications
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            let icon = 'fa-info-circle';
-            if (type === 'success') icon = 'fa-check-circle';
-            else if (type === 'error') icon = 'fa-exclamation-circle';
-            
-            toast.innerHTML = `
-                <i class="fas ${icon} toast-icon"></i>
-                <span>${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Auto remove after 3 seconds
-            setTimeout(() => {
-                toast.style.animation = 'slideOutRight 0.3s ease-out';
-                setTimeout(() => {
-                    container.removeChild(toast);
-                }, 300);
-            }, 3000);
         }
         
         // ============================================
