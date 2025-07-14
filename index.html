@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     
     <!-- TensorFlow.js - Use stable version and load in correct order -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script></script>
     
     <!-- jsPDF for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -84,437 +84,6 @@
         }
         
         /* ============================================
-           Agricultural Chat Widget Styles
-        ============================================ */
-        #agri-chat-widget-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 65px;
-            height: 65px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            box-shadow: var(--shadow-lg);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9998;
-            transition: var(--transition);
-            overflow: hidden;
-        }
-
-        #agri-chat-widget-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        #agri-chat-widget-button:hover::before {
-            width: 100px;
-            height: 100px;
-        }
-
-        #agri-chat-widget-button:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-xl);
-        }
-
-        #agri-chat-widget-button svg {
-            width: 35px;
-            height: 35px;
-            fill: white;
-        }
-
-        .chat-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--danger-color);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 600;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Chat Widget Container */
-        #agri-chat-widget-container {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            width: 380px;
-            height: 600px;
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-xl);
-            display: none;
-            flex-direction: column;
-            z-index: 9999;
-            overflow: hidden;
-            animation: slideInUp 0.3s ease-out;
-        }
-
-        body.dark-mode #agri-chat-widget-container {
-            background: var(--dark-color);
-            border: 1px solid var(--border-color);
-        }
-
-        /* Chat Header */
-        .agri-chat-header {
-            background: var(--gradient-primary);
-            color: white;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .agri-chat-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-
-        .agri-chat-header-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .agri-chat-header h3 {
-            margin: 0 0 5px 0;
-            font-size: 1.2rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .agri-chat-header p {
-            margin: 0;
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-
-        .agri-close-button {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-            position: relative;
-            z-index: 1;
-        }
-
-        .agri-close-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
-        }
-
-        /* Chat Messages Area */
-        .agri-chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: var(--light-color);
-            scroll-behavior: smooth;
-        }
-
-        body.dark-mode .agri-chat-messages {
-            background: var(--dark-color);
-        }
-
-        .agri-message {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .agri-message.user {
-            flex-direction: row-reverse;
-        }
-
-        .agri-message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 1.2rem;
-        }
-
-        .agri-message.bot .agri-message-avatar {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .agri-message.user .agri-message-avatar {
-            background: var(--gradient-secondary);
-            color: white;
-        }
-
-        .agri-message-bubble {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: var(--border-radius-sm);
-            font-size: 0.95rem;
-            line-height: 1.5;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .agri-message.bot .agri-message-bubble {
-            background: white;
-            color: var(--text-color);
-            border-bottom-left-radius: 4px;
-        }
-
-        body.dark-mode .agri-message.bot .agri-message-bubble {
-            background: var(--light-color);
-        }
-
-        .agri-message.user .agri-message-bubble {
-            background: var(--gradient-primary);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        /* Typing Indicator */
-        .agri-typing-indicator {
-            display: none;
-            padding: 12px 16px;
-            background: white;
-            border-radius: var(--border-radius-sm);
-            max-width: 80px;
-            margin-bottom: 15px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        body.dark-mode .agri-typing-indicator {
-            background: var(--light-color);
-        }
-
-        .agri-typing-indicator span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            margin: 0 2px;
-            animation: typing 1.4s infinite;
-        }
-
-        .agri-typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .agri-typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0%, 60%, 100% {
-                transform: translateY(0);
-            }
-            30% {
-                transform: translateY(-10px);
-            }
-        }
-
-        /* Chat Input Area */
-        .agri-chat-input-area {
-            padding: 20px;
-            border-top: 1px solid var(--border-color);
-            background: white;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        body.dark-mode .agri-chat-input-area {
-            background: var(--light-color);
-        }
-
-        .agri-chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            transition: var(--transition);
-            background: var(--light-color);
-            color: var(--text-color);
-        }
-
-        body.dark-mode .agri-chat-input {
-            background: var(--dark-color);
-            color: var(--text-color);
-        }
-
-        .agri-chat-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-
-        .agri-send-button {
-            background: var(--gradient-primary);
-            color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-            flex-shrink: 0;
-        }
-
-        .agri-send-button:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-md);
-        }
-
-        .agri-send-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Quick Actions */
-        .agri-quick-actions {
-            padding: 10px 20px;
-            background: var(--light-color);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        body.dark-mode .agri-quick-actions {
-            background: var(--dark-color);
-        }
-
-        .agri-quick-action {
-            padding: 6px 12px;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text-color);
-        }
-
-        body.dark-mode .agri-quick-action {
-            background: var(--light-color);
-        }
-
-        .agri-quick-action:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            #agri-chat-widget-container {
-                width: 100%;
-                height: 100%;
-                right: 0;
-                bottom: 0;
-                border-radius: 0;
-            }
-
-            .agri-chat-messages {
-                padding: 15px;
-            }
-        }
-
-        /* ============================================
-           Existing Styles (Preloader, etc.)
-        ============================================ */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideInUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes slideInDown {
-            from { transform: translateY(-30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes slideInLeft {
-            from { transform: translateX(-30px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(30px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
-        .animate-slideInUp { animation: slideInUp 0.5s ease-out; }
-        .animate-slideInDown { animation: slideInDown 0.5s ease-out; }
-        .animate-slideInLeft { animation: slideInLeft 0.5s ease-out; }
-        .animate-slideInRight { animation: slideInRight 0.5s ease-out; }
-        .animate-pulse { animation: pulse 2s ease-in-out infinite; }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        
-        /* ============================================
            Preloader
         ============================================ */
         .preloader {
@@ -571,6 +140,57 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
         }
+        
+        /* ============================================
+           Animations
+        ============================================ */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideInDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideInLeft {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-slideInUp { animation: slideInUp 0.5s ease-out; }
+        .animate-slideInDown { animation: slideInDown 0.5s ease-out; }
+        .animate-slideInLeft { animation: slideInLeft 0.5s ease-out; }
+        .animate-slideInRight { animation: slideInRight 0.5s ease-out; }
+        .animate-pulse { animation: pulse 2s ease-in-out infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
         
         /* ============================================
            Header & Navigation
@@ -950,7 +570,6 @@
         .card-body {
             padding: 30px;
         }
-        
         
         /* ============================================
            Upload Section
@@ -1857,9 +1476,393 @@
         body.dark-mode ::-webkit-scrollbar-track {
             background: var(--dark-color);
         }
+        /* Chatbot Styles */
+    .chatbot-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 50%;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+    }
+    
+    .chatbot-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .chatbot-button i {
+        color: white;
+        font-size: 28px;
+    }
+    
+    .chatbot-notification {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        background: #ef4444;
+        border-radius: 50%;
+        display: none;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .chatbot-popup {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 400px;
+        height: 600px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        z-index: 1001;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .chatbot-popup.active {
+        display: flex;
+        animation: slideInUp 0.3s ease-out;
+    }
+    
+    @keyframes slideInUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .chatbot-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+    
+    .chatbot-header-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .chatbot-avatar {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    
+    .chatbot-header-text h3 {
+        font-size: 18px;
+        margin: 0 0 2px 0;
+        font-weight: 600;
+    }
+    
+    .chatbot-header-text p {
+        font-size: 12px;
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .chatbot-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        padding: 0;
+    }
+    
+    .chatbot-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(90deg);
+    }
+    
+    .chatbot-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #fafafa;
+        scroll-behavior: smooth;
+    }
+    
+    .chatbot-message {
+        margin-bottom: 15px;
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .chatbot-message.user {
+        text-align: right;
+    }
+    
+    .chatbot-message.bot {
+        text-align: left;
+    }
+    
+    .chatbot-bubble {
+        display: inline-block;
+        max-width: 80%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        word-wrap: break-word;
+        position: relative;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .chatbot-message.user .chatbot-bubble {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 18px 18px 4px 18px;
+        text-align: left;
+    }
+    
+    .chatbot-message.bot .chatbot-bubble {
+        background: white;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px 18px 18px 4px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    
+    .chatbot-typing {
+        display: none;
+        align-items: center;
+        gap: 4px;
+        padding: 15px 20px;
+    }
+    
+    .chatbot-typing span {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+    
+    .chatbot-typing span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .chatbot-typing span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.7;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
+    }
+    
+    .chatbot-input {
+        padding: 15px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .chatbot-input-field {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 25px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.3s;
+        background: transparent;
+        color: #374151;
+        outline: none;
+    }
+    
+    .chatbot-input-field:focus {
+        border-color: #10b981;
+    }
+    
+    .chatbot-send {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        flex-shrink: 0;
+        font-size: 16px;
+    }
+    
+    .chatbot-send:hover:not(:disabled) {
+        transform: scale(1.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chatbot-send:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .chatbot-quick-actions {
+        padding: 10px 15px;
+        background: #f5f5f5;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .chatbot-quick-actions.show {
+        max-height: 100px;
+        padding: 10px 15px;
+    }
+    
+    .quick-action-btn {
+        padding: 6px 12px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 15px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #374151;
+        font-family: inherit;
+    }
+    
+    .quick-action-btn:hover {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+        .chatbot-popup {
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            right: 0;
+            border-radius: 0;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .chatbot-button {
+            bottom: 20px;
+            right: 20px;
+        }
+    }
+    
+    /* Scrollbar */
+    .chatbot-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chatbot-messages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .chatbot-messages::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 3px;
+    }
     </style>
 </head>
+    
 <body>
+    <button class="chatbot-button" id="chatbotButton" aria-label="เปิด AI ผู้ช่วย">
+    <i class="fas fa-comments"></i>
+    <div class="chatbot-notification"></div>
+</button>
+
+<!-- Chatbot Popup -->
+<div class="chatbot-popup" id="chatbotPopup">
+    <div class="chatbot-header">
+        <div class="chatbot-header-info">
+            <div class="chatbot-avatar">🌾</div>
+            <div class="chatbot-header-text">
+                <h3>AI ผู้ช่วยเกษตร</h3>
+                <p>ออนไลน์ • พร้อมตอบคำถาม</p>
+            </div>
+        </div>
+        <button class="chatbot-close" id="chatbotClose" aria-label="ปิด">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <div class="chatbot-messages" id="chatbotMessages">
+        <!-- Messages will be added here -->
+    </div>
+    
+    <div class="chatbot-typing" id="chatbotTyping">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    
+    <div class="chatbot-quick-actions" id="quickActions">
+        <button class="quick-action-btn" onclick="sendQuickMessage('วิธีการใช้งานระบบ')">วิธีใช้งาน</button>
+        <button class="quick-action-btn" onclick="sendQuickMessage('แนะนำการปลูกพืช')">แนะนำการปลูกพืช</button>
+        <button class="quick-action-btn" onclick="sendQuickMessage('ปัญหาโรคพืช')">โรคพืช</button>
+        <button class="quick-action-btn" onclick="sendQuickMessage('การใช้ปุ๋ย')">การใช้ปุ๋ย</button>
+    </div>
+    
+    <div class="chatbot-input">
+        <input type="text" class="chatbot-input-field" id="chatbotInput" placeholder="พิมพ์ข้อความของคุณ...">
+        <button class="chatbot-send" id="chatbotSend" aria-label="ส่งข้อความ">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
     <!-- Preloader -->
     <div class="preloader" id="preloader">
         <div class="preloader-content">
@@ -1873,72 +1876,6 @@
     
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- Agricultural Chat Widget -->
-    <div id="agri-chat-widget-button" onclick="toggleAgriChat()">
-        <svg viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 2.98.97 4.29L1 23l6.71-1.97C9.02 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.41 0-2.73-.36-3.88-.99l-.28-.15-2.92.77.79-2.88-.18-.29C4.9 15.32 4.55 13.69 4.55 12c0-4.42 3.58-8 8-8s8 3.58 8 8-3.58 8-8 8z"/>
-            <path d="M7 9h10v2H7zm0 3h7v2H7z"/>
-        </svg>
-        <div class="chat-badge">1</div>
-    </div>
-
-    <div id="agri-chat-widget-container">
-        <div class="agri-chat-header">
-            <div class="agri-chat-header-content">
-                <h3><i class="fas fa-seedling"></i> AI ผู้ช่วยด้านการเกษตร</h3>
-                <p>ถามอะไรก็ได้เกี่ยวกับการเกษตร</p>
-            </div>
-            <button class="agri-close-button" onclick="toggleAgriChat()">×</button>
-        </div>
-        
-        <div class="agri-chat-messages" id="agriChatMessages">
-            <div class="agri-message bot">
-                <div class="agri-message-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="agri-message-bubble">
-                    สวัสดีครับ! ผมคือ AI ผู้ช่วยด้านการเกษตร 🌾 
-                    <br><br>
-                    ผมสามารถช่วยตอบคำถามเกี่ยวกับ:
-                    <br>• การปลูกพืช และการดูแลรักษา
-                    <br>• โรคและแมลงศัตรูพืช
-                    <br>• การใช้ปุ๋ยและสารเคมี
-                    <br>• เทคโนโลยีการเกษตรสมัยใหม่
-                    <br><br>
-                    มีอะไรให้ช่วยไหมครับ? 😊
-                </div>
-            </div>
-        </div>
-        
-        <div class="agri-typing-indicator" id="agriTypingIndicator">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        
-        <div class="agri-quick-actions">
-            <div class="agri-quick-action" onclick="sendQuickMessage('วิธีปลูกผักไฮโดรโปนิกส์')">
-                💧 ไฮโดรโปนิกส์
-            </div>
-            <div class="agri-quick-action" onclick="sendQuickMessage('โรคใบไหม้ในข้าว')">
-                🌾 โรคข้าว
-            </div>
-            <div class="agri-quick-action" onclick="sendQuickMessage('ปุ๋ยสำหรับมะม่วง')">
-                🥭 ปุ๋ยผลไม้
-            </div>
-            <div class="agri-quick-action" onclick="sendQuickMessage('กำจัดแมลงหวี่ขาว')">
-                🐛 ศัตรูพืช
-            </div>
-        </div>
-        
-        <div class="agri-chat-input-area">
-            <input type="text" class="agri-chat-input" id="agriChatInput" placeholder="พิมพ์คำถามของคุณ..." onkeypress="handleAgriKeyPress(event)">
-            <button class="agri-send-button" id="agriSendButton" onclick="sendAgriMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
     
     <!-- Header -->
     <header>
@@ -2260,131 +2197,13 @@
     
     <script>
         // ============================================
-        // Agricultural Chat Widget Functions
-        // ============================================
-        const CHAT_API_ENDPOINT = 'https://aichatbotfarmer-2.onrender.com/'; // Your Flask API endpoint
-        let chatOpen = false;
-        
-        function toggleAgriChat() {
-            const container = document.getElementById('agri-chat-widget-container');
-            const button = document.getElementById('agri-chat-widget-button');
-            
-            chatOpen = !chatOpen;
-            
-            if (chatOpen) {
-                container.style.display = 'flex';
-                button.style.display = 'none';
-                document.getElementById('agriChatInput').focus();
-                
-                // Remove badge when opened
-                const badge = button.querySelector('.chat-badge');
-                if (badge) {
-                    badge.style.display = 'none';
-                }
-            } else {
-                container.style.display = 'none';
-                button.style.display = 'flex';
-            }
-        }
-        
-        function handleAgriKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendAgriMessage();
-            }
-        }
-        
-        async function sendAgriMessage() {
-            const input = document.getElementById('agriChatInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            // Add user message
-            addAgriMessage(message, 'user');
-            
-            // Clear input and disable send button
-            input.value = '';
-            const sendButton = document.getElementById('agriSendButton');
-            sendButton.disabled = true;
-            
-            // Show typing indicator
-            showAgriTypingIndicator();
-            
-            try {
-                const response = await fetch(CHAT_API_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-                
-                const data = await response.json();
-                
-                hideAgriTypingIndicator();
-                
-                if (data.error) {
-                    addAgriMessage('ขออภัย เกิดข้อผิดพลาด: ' + data.error, 'bot');
-                } else {
-                    addAgriMessage(data.response, 'bot');
-                }
-            } catch (error) {
-                hideAgriTypingIndicator();
-                addAgriMessage('ขออภัย ไม่สามารถเชื่อมต่อกับ AI ได้ กรุณาตรวจสอบว่า server ทำงานอยู่', 'bot');
-            } finally {
-                sendButton.disabled = false;
-                input.focus();
-            }
-        }
-        
-        function sendQuickMessage(message) {
-            document.getElementById('agriChatInput').value = message;
-            sendAgriMessage();
-        }
-        
-        function addAgriMessage(message, sender) {
-            const messagesContainer = document.getElementById('agriChatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `agri-message ${sender}`;
-            
-            const avatarDiv = document.createElement('div');
-            avatarDiv.className = 'agri-message-avatar';
-            avatarDiv.innerHTML = sender === 'bot' ? 
-                '<i class="fas fa-robot"></i>' : 
-                '<i class="fas fa-user"></i>';
-            
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.className = 'agri-message-bubble';
-            bubbleDiv.textContent = message;
-            
-            messageDiv.appendChild(avatarDiv);
-            messageDiv.appendChild(bubbleDiv);
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-        
-        function showAgriTypingIndicator() {
-            const indicator = document.getElementById('agriTypingIndicator');
-            const messagesContainer = document.getElementById('agriChatMessages');
-            indicator.style.display = 'block';
-            messagesContainer.appendChild(indicator);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-        
-        function hideAgriTypingIndicator() {
-            const indicator = document.getElementById('agriTypingIndicator');
-            indicator.style.display = 'none';
-        }
-        
-        // ============================================
-        // Existing SoilAI Functions (from original code)
+        // Utility Functions - Move to top
         // ============================================
         
-        // Utility Functions
+        // Animate number values
         function animateValue(id, start, end, duration) {
             const element = document.getElementById(id);
-            if (!element) return;
+            if (!element) return; // Check if element exists
             
             const range = end - start;
             const increment = range / (duration / 16);
@@ -2421,9 +2240,11 @@
                     span.textContent = message;
                     element.style.display = 'flex';
                     
+                    // Auto hide after 5 seconds
                     setTimeout(hideMessage, 5000);
                 }
             } else {
+                // Fallback to toast if elements not found
                 console.error('Message elements not found, using toast instead');
                 showToast(message, type);
             }
@@ -2463,6 +2284,7 @@
             
             container.appendChild(toast);
             
+            // Auto remove after 3 seconds
             setTimeout(() => {
                 toast.style.animation = 'slideOutRight 0.3s ease-out';
                 setTimeout(() => {
@@ -2480,7 +2302,9 @@
             }
         }
         
+        // ============================================
         // Global Variables
+        // ============================================
         let model = null;
         let cameraStream = null;
         let currentCamera = 'environment';
@@ -2596,16 +2420,20 @@
         // Initialize app with proper error handling
         async function initializeApp() {
             try {
+                // Update preloader progress
                 updatePreloaderProgress(10);
                 
+                // Wait for TensorFlow.js to be fully loaded
                 await waitForTensorFlow();
                 console.log('TensorFlow.js loaded:', tf.version.tfjs);
                 updatePreloaderProgress(20);
                 
+                // Set backend explicitly and wait for it to be ready
                 await tf.setBackend('webgl');
                 await tf.ready();
                 console.log('TensorFlow backend ready:', tf.getBackend());
                 
+                // Test TensorFlow is working
                 const testTensor = tf.tensor([1, 2, 3]);
                 await testTensor.data();
                 testTensor.dispose();
@@ -2614,27 +2442,36 @@
                 isTensorFlowReady = true;
                 updatePreloaderProgress(30);
                 
+                // Load theme
                 checkTheme();
                 updatePreloaderProgress(40);
                 
+                // Setup event listeners
                 setupEventListeners();
                 updatePreloaderProgress(50);
                 
+                // Load model - MUST succeed for app to work
                 try {
                     await loadModel();
                     updatePreloaderProgress(80);
                 } catch (modelError) {
+                    // If model fails to load, show instructions
                     hidePreloader();
+                    
+                    // Show detailed error modal
                     showModelErrorInstructions();
-                    return;
+                    return; // Stop initialization
                 }
                 
+                // Load history
                 loadHistory();
                 updatePreloaderProgress(90);
                 
+                // Update stats
                 updateStats();
                 updatePreloaderProgress(100);
                 
+                // Hide preloader
                 setTimeout(() => {
                     hidePreloader();
                     showToast('ระบบพร้อมใช้งาน', 'success');
@@ -2647,6 +2484,7 @@
             }
         }
         
+        // Show detailed instructions when model fails to load
         function showModelErrorInstructions() {
             const instructionsHTML = `
                 <div style="background: #fee; padding: 20px; border-radius: 10px; margin: 20px auto; max-width: 800px; border: 2px solid #dc2626;">
@@ -2692,14 +2530,18 @@ project-folder/
             document.querySelector('.container').innerHTML = instructionsHTML;
         }
         
+        // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', async function() {
+            // Check and clean storage first
             await checkAndCleanStorage();
+            
             showPreloader();
             await initializeApp();
         });
         
         async function checkAndCleanStorage() {
             try {
+                // Check storage size
                 if ('storage' in navigator && 'estimate' in navigator.storage) {
                     const storageEstimate = await navigator.storage.estimate();
                     const usedMB = (storageEstimate.usage / 1024 / 1024).toFixed(2);
@@ -2707,6 +2549,7 @@ project-folder/
                     
                     console.log(`Storage: ${usedMB} MB / ${quotaMB} MB used`);
                     
+                    // If using more than 50MB, clean up
                     if (storageEstimate.usage > 50 * 1024 * 1024) {
                         console.log('Cleaning up storage...');
                         clearOldData();
@@ -2717,6 +2560,7 @@ project-folder/
             }
         }
         
+        // Preloader functions
         function showPreloader() {
             document.getElementById('preloader').style.display = 'flex';
         }
@@ -2733,16 +2577,21 @@ project-folder/
             document.getElementById('preloaderBar').style.width = percent + '%';
         }
         
+        // Load TensorFlow model with better error handling
         async function loadModel() {
             try {
+                // Check if TensorFlow is ready
                 if (!isTensorFlowReady || typeof tf === 'undefined') {
                     throw new Error('TensorFlow.js not ready');
                 }
                 
+                // Ensure backend is ready
                 await tf.ready();
                 
+                // Update preloader text
                 document.querySelector('.preloader-text').textContent = 'กำลังโหลด AI Model...';
                 
+                // Try multiple paths for the model
                 const modelPaths = [
                     './tfjs_model/model.json',
                     '/tfjs_model/model.json',
@@ -2755,16 +2604,20 @@ project-folder/
                 let modelLoaded = false;
                 let lastError = null;
                 
+                // Try each path
                 for (const path of modelPaths) {
                     try {
                         console.log('Attempting to load model from:', path);
                         
+                        // Load the model with error handling
                         model = await tf.loadLayersModel(path);
                         
+                        // Verify model loaded correctly
                         console.log('Model loaded, checking structure...');
                         console.log('Model input shape:', model.inputs[0].shape);
                         console.log('Model output shape:', model.outputs[0].shape);
                         
+                        // Warmup the model
                         console.log('Warming up model...');
                         const dummyInput = tf.zeros([1, 224, 224, 3]);
                         const warmupResult = model.predict(dummyInput);
@@ -2783,6 +2636,7 @@ project-folder/
                         lastError = error;
                         console.error(`Failed to load from ${path}:`, error.message);
                         
+                        // If CORS error, suggest solution
                         if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
                             console.warn('💡 CORS error detected. Model files must be served from the same domain or have proper CORS headers.');
                         }
@@ -2795,6 +2649,7 @@ project-folder/
                     throw new Error(`Could not load model from any path. Last error: ${lastError?.message}`);
                 }
                 
+                // Update stats
                 animateValue('accuracyStat', 0, 96, 2000);
                 animateValue('imagesStat', 0, 180, 2000);
                 
@@ -2802,49 +2657,63 @@ project-folder/
                 console.error('Critical error loading model:', error);
                 isModelReady = false;
                 
+                // Show detailed error message
                 showToast(`ไม่สามารถโหลด Model: ${error.message}`, 'error');
                 
+                // Provide instructions
                 setTimeout(() => {
                     showMessage('กรุณาตรวจสอบว่าไฟล์ model.json และ weight files อยู่ในโฟลเดอร์ tfjs_model/', 'error');
                 }, 1000);
                 
-                throw error;
+                throw error; // Re-throw to stop initialization
             }
         }
         
+        // ============================================
+        // Color Analysis Helper
+        // ============================================
         async function analyzeImageColors(imgElement) {
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
+                // Set canvas size
                 canvas.width = imgElement.width;
                 canvas.height = imgElement.height;
                 
+                // Draw image to canvas
                 ctx.drawImage(imgElement, 0, 0);
                 
+                // Get image data
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 
+                // Calculate color statistics
                 let rSum = 0, gSum = 0, bSum = 0;
                 let rMin = 255, gMin = 255, bMin = 255;
                 let rMax = 0, gMax = 0, bMax = 0;
                 let pixelCount = 0;
                 
+                // Color histogram for dominant colors
                 const colorBins = {};
                 
+                // Process pixels
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i];
                     const g = data[i + 1];
                     const b = data[i + 2];
                     const a = data[i + 3];
                     
+                    // Skip transparent pixels
                     if (a < 128) continue;
                     
+                    // Update sums
                     rSum += r;
                     gSum += g;
                     bSum += b;
                     pixelCount++;
                     
+                    // Update min/max
                     rMin = Math.min(rMin, r);
                     gMin = Math.min(gMin, g);
                     bMin = Math.min(bMin, b);
@@ -2852,6 +2721,7 @@ project-folder/
                     gMax = Math.max(gMax, g);
                     bMax = Math.max(bMax, b);
                     
+                    // Create color bin (reduce colors to 32 levels per channel)
                     const binR = Math.floor(r / 8) * 8;
                     const binG = Math.floor(g / 8) * 8;
                     const binB = Math.floor(b / 8) * 8;
@@ -2860,10 +2730,12 @@ project-folder/
                     colorBins[binKey] = (colorBins[binKey] || 0) + 1;
                 }
                 
+                // Calculate averages
                 const rAvg = rSum / pixelCount;
                 const gAvg = gSum / pixelCount;
                 const bAvg = bSum / pixelCount;
                 
+                // Find dominant colors
                 const sortedColors = Object.entries(colorBins)
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 5)
@@ -2872,16 +2744,20 @@ project-folder/
                         return { r, g, b, percentage: (count / pixelCount) * 100 };
                     });
                 
+                // Calculate color characteristics
                 const brightness = (rAvg + gAvg + bAvg) / 3;
                 const saturation = Math.max(rAvg, gAvg, bAvg) - Math.min(rAvg, gAvg, bAvg);
                 
+                // Calculate brown/red ratio (important for soil)
                 const brownScore = (rAvg > gAvg && gAvg > bAvg) ? 
                     (rAvg - bAvg) / 255 : 0;
                 
+                // Calculate gray/sandy score
                 const grayScore = Math.abs(rAvg - gAvg) < 20 && 
                                  Math.abs(gAvg - bAvg) < 20 && 
                                  Math.abs(rAvg - bAvg) < 20 ? 1 : 0;
                 
+                // Calculate darkness (clay indicator)
                 const darknessScore = 1 - (brightness / 255);
                 
                 resolve({
@@ -2900,43 +2776,56 @@ project-folder/
             });
         }
         
+        // Combine model predictions with color analysis
         function combineAnalysisResults(modelPredictions, colorAnalysis) {
+            // Get base predictions from model
             let combinedPredictions = [...modelPredictions];
             
+            // Apply color-based adjustments
             const { brownScore, grayScore, darknessScore } = colorAnalysis.characteristics;
             
+            // Weights for color influence (30% color, 70% model)
             const colorWeight = 0.3;
             const modelWeight = 0.7;
             
+            // Calculate color-based predictions
             let colorPredictions = [0, 0, 0];
             
+            // Loam (brownish soil)
             if (brownScore > 0.3) {
                 colorPredictions[0] = brownScore;
             }
             
+            // Sand (light/gray soil)
             if (grayScore > 0.5 || colorAnalysis.characteristics.brightness > 0.6) {
                 colorPredictions[1] = Math.max(grayScore, colorAnalysis.characteristics.brightness - 0.3);
             }
             
+            // Clay (dark soil)
             if (darknessScore > 0.5) {
                 colorPredictions[2] = darknessScore;
             }
             
+            // Normalize color predictions
             const colorSum = colorPredictions.reduce((a, b) => a + b, 0);
             if (colorSum > 0) {
                 colorPredictions = colorPredictions.map(p => p / colorSum);
             } else {
+                // If no clear color pattern, use equal weights
                 colorPredictions = [0.33, 0.33, 0.34];
             }
             
+            // Combine model and color predictions
             for (let i = 0; i < 3; i++) {
                 combinedPredictions[i] = (modelPredictions[i] * modelWeight) + 
                                         (colorPredictions[i] * colorWeight);
             }
             
+            // Normalize final predictions
             const finalSum = combinedPredictions.reduce((a, b) => a + b, 0);
             combinedPredictions = combinedPredictions.map(p => p / finalSum);
             
+            // Log analysis details
             console.log('Color Analysis:', {
                 average: colorAnalysis.average,
                 characteristics: colorAnalysis.characteristics,
@@ -2952,27 +2841,34 @@ project-folder/
             };
         }
         
+        // Calculate confidence boost from color agreement
         function calculateConfidenceBoost(modelPred, colorPred) {
+            // Find the index with highest prediction for both
             const modelMax = Math.max(...modelPred);
             const modelIndex = modelPred.indexOf(modelMax);
             const colorMax = Math.max(...colorPred);
             const colorIndex = colorPred.indexOf(colorMax);
             
+            // If both agree, boost confidence
             if (modelIndex === colorIndex) {
-                return 0.1;
+                return 0.1; // 10% boost
             }
             
-            return 0;
+            return 0; // No boost if they disagree
         }
         
+        // Setup event listeners
         function setupEventListeners() {
             const uploadArea = document.getElementById('uploadArea');
             const imageInput = document.getElementById('imageInput');
             
+            // Click to upload
             uploadArea.addEventListener('click', () => imageInput.click());
             
+            // File input change
             imageInput.addEventListener('change', handleFileSelect);
             
+            // Drag and drop
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 uploadArea.classList.add('dragover');
@@ -2988,6 +2884,7 @@ project-folder/
                 handleFiles(e.dataTransfer.files);
             });
             
+            // Smooth scroll for navigation links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -3001,11 +2898,15 @@ project-folder/
                 });
             });
             
+            // Mobile menu toggle
             document.querySelector('.mobile-menu-toggle').addEventListener('click', () => {
                 document.querySelector('.nav-links').classList.toggle('show');
             });
         }
         
+        // ============================================
+        // File Handling
+        // ============================================
         function handleFileSelect(e) {
             handleFiles(e.target.files);
         }
@@ -3026,6 +2927,7 @@ project-folder/
                 document.getElementById('analyzeBtn').style.display = 'inline-flex';
                 document.getElementById('emptyResult').style.display = 'none';
                 
+                // Add animation
                 preview.classList.add('animate-fadeIn');
             };
             reader.readAsDataURL(file);
@@ -3045,6 +2947,9 @@ project-folder/
             return true;
         }
         
+        // ============================================
+        // Image Analysis with Memory Management
+        // ============================================
         async function analyzeImage() {
             const preview = document.getElementById('previewImage');
             if (!preview.src || preview.src === window.location.href) {
@@ -3057,37 +2962,47 @@ project-folder/
                 return;
             }
             
+            // Show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('analyzeBtn').style.display = 'none';
             
             let inputTensor = null;
             
             try {
+                // Ensure TensorFlow is ready
                 await tf.ready();
                 
+                // Check storage quota
                 if (!await checkStorageQuota()) {
                     clearOldData();
                 }
                 
+                // Preprocess image with TensorFlow
                 inputTensor = await preprocessImage(preview);
                 console.log('Input tensor shape:', inputTensor.shape);
                 
+                // Make prediction using TensorFlow model
                 const outputTensor = model.predict(inputTensor);
                 const predictions = await outputTensor.data();
                 outputTensor.dispose();
                 
                 console.log('Predictions:', predictions);
                 
+                // Process results
                 const result = processResults(predictions);
                 
+                // Compress image before saving
                 result.imageData = await compressImage(preview.src);
                 result.timestamp = new Date();
                 
+                // Show results with animation
                 displayResults(result);
                 
+                // Update stats
                 analyzeCount++;
                 updateStats();
                 
+                // Save to recent analyses
                 saveToRecent(result);
                 
                 showToast('วิเคราะห์เสร็จสิ้น', 'success');
@@ -3096,6 +3011,7 @@ project-folder/
                 console.error('Analysis error:', error);
                 showMessage('เกิดข้อผิดพลาดในการวิเคราะห์: ' + error.message, 'error');
                 
+                // Log more details for debugging
                 console.error('Error details:', {
                     message: error.message,
                     stack: error.stack,
@@ -3105,14 +3021,17 @@ project-folder/
                 });
                 
             } finally {
+                // Always dispose tensor to prevent memory leak
                 if (inputTensor) {
                     inputTensor.dispose();
                 }
                 
+                // Clean up any leaked tensors
                 if (typeof tf !== 'undefined') {
                     const numTensors = tf.memory().numTensors;
                     console.log('Number of tensors in memory:', numTensors);
                     
+                    // If too many tensors, dispose all variables
                     if (numTensors > 10) {
                         tf.disposeVariables();
                     }
@@ -3123,6 +3042,7 @@ project-folder/
             }
         }
         
+        // Check storage quota
         async function checkStorageQuota() {
             try {
                 if ('storage' in navigator && 'estimate' in navigator.storage) {
@@ -3130,6 +3050,7 @@ project-folder/
                     const percentUsed = (usage / quota) * 100;
                     console.log(`Storage: ${(usage / 1024 / 1024).toFixed(2)} MB / ${(quota / 1024 / 1024).toFixed(2)} MB (${percentUsed.toFixed(2)}%)`);
                     
+                    // If more than 80% used, need cleanup
                     return percentUsed < 80;
                 }
             } catch (e) {
@@ -3138,6 +3059,7 @@ project-folder/
             return true;
         }
         
+        // Compress image to reduce storage
         async function compressImage(imageSrc) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -3145,12 +3067,14 @@ project-folder/
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
+                    // Max dimensions
                     const maxWidth = 800;
                     const maxHeight = 600;
                     
                     let width = img.width;
                     let height = img.height;
                     
+                    // Calculate new dimensions
                     if (width > height) {
                         if (width > maxWidth) {
                             height = Math.round((height * maxWidth) / width);
@@ -3168,28 +3092,34 @@ project-folder/
                     
                     ctx.drawImage(img, 0, 0, width, height);
                     
+                    // Compress as JPEG with 70% quality
                     resolve(canvas.toDataURL('image/jpeg', 0.7));
                 };
                 img.src = imageSrc;
             });
         }
         
+        // Clear old data to free up space
         function clearOldData() {
             try {
+                // Clear old history but keep recent 10
                 let history = JSON.parse(localStorage.getItem('soilAnalysisHistory') || '[]');
                 if (history.length > 10) {
                     history = history.slice(-10);
                     localStorage.setItem('soilAnalysisHistory', JSON.stringify(history));
                 }
                 
+                // Clear recent analyses but keep last 3
                 let recent = JSON.parse(localStorage.getItem('recentAnalyses') || '[]');
                 if (recent.length > 3) {
                     recent = recent.slice(0, 3);
                     localStorage.setItem('recentAnalyses', JSON.stringify(recent));
                 }
                 
+                // Clear other unnecessary data
                 const keysToCheck = Object.keys(localStorage);
                 keysToCheck.forEach(key => {
+                    // Remove old/temporary data
                     if (key.startsWith('temp_') || key.startsWith('old_')) {
                         localStorage.removeItem(key);
                     }
@@ -3202,19 +3132,32 @@ project-folder/
         }
         
         async function preprocessImage(imgElement) {
+            // Ensure TensorFlow is ready
             if (typeof tf === 'undefined') {
                 throw new Error('TensorFlow.js not available');
             }
             
+            // Double check backend is ready
             await tf.ready();
             
+            // Process image inside tidy to prevent memory leaks
             const processedTensor = tf.tidy(() => {
                 try {
+                    // Convert image to tensor
                     const imgTensor = tf.browser.fromPixels(imgElement, 3);
+                    
+                    // Convert to float and normalize to [0, 1]
                     const normalized = imgTensor.toFloat().div(tf.scalar(255.0));
+                    
+                    // Resize to model input size
                     const resized = tf.image.resizeBilinear(normalized, [224, 224]);
+                    
+                    // Add batch dimension [1, 224, 224, 3]
                     const batched = resized.expandDims(0);
+                    
+                    // Return the processed tensor
                     return batched;
+                    
                 } catch (error) {
                     console.error('Error in image preprocessing:', error);
                     throw error;
@@ -3229,6 +3172,7 @@ project-folder/
             const confidence = predictions[maxIndex];
             const soilData = soilTypes[maxIndex];
             
+            // Generate values
             const phMin = soilData.phRange.min;
             const phMax = soilData.phRange.max;
             const phValue = `${phMin}-${phMax}`;
@@ -3250,30 +3194,39 @@ project-folder/
             };
         }
         
+        // ============================================
+        // Display Results
+        // ============================================
         function displayResults(result) {
+            // Show result section with animation
             const resultDisplay = document.getElementById('resultDisplay');
             resultDisplay.style.display = 'block';
             resultDisplay.classList.add('animate-fadeIn');
             document.getElementById('emptyResult').style.display = 'none';
             
+            // Update soil type with icon
             const iconElement = document.getElementById('soilIcon');
             iconElement.innerHTML = `<i class="fas ${result.soilData.icon} animate-bounceIn" style="font-size: 5rem; color: ${result.soilData.color};"></i>`;
             document.getElementById('soilName').textContent = 
                 `${result.soilData.name} (${result.soilData.nameEn})`;
             
+            // Update confidence bar with animation
             const confidencePercent = (result.confidence * 100).toFixed(1);
             const confidenceFill = document.getElementById('confidenceFill');
             
+            // Reset and animate
             confidenceFill.style.width = '0%';
             setTimeout(() => {
                 confidenceFill.style.width = `${confidencePercent}%`;
                 confidenceFill.textContent = `${confidencePercent}%`;
             }, 100);
             
+            // Update values with animation
             document.getElementById('phValue').textContent = result.phValue;
             document.getElementById('moistureValue').textContent = result.moistureValue;
             document.getElementById('tempValue').textContent = result.tempValue;
             
+            // Update recommendations with animation
             const recList = document.getElementById('recommendationsList');
             recList.innerHTML = '';
             result.soilData.recommendations.forEach((rec, index) => {
@@ -3288,6 +3241,7 @@ project-folder/
                 }, index * 100);
             });
             
+            // Update suitable plants with animation
             const plantsList = document.getElementById('suitablePlantsList');
             plantsList.innerHTML = '';
             result.soilData.suitablePlants.forEach((plant, index) => {
@@ -3303,9 +3257,13 @@ project-folder/
                 }, index * 50);
             });
             
+            // Store current result
             window.currentResult = result;
         }
         
+        // ============================================
+        // Camera Functions
+        // ============================================
         async function openCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -3351,20 +3309,25 @@ project-folder/
             document.getElementById('cameraModal').style.display = 'none';
         }
         
+        // ============================================
+        // History Management
+        // ============================================
         function saveToHistory() {
             if (!window.currentResult) {
                 showMessage('ไม่มีผลการวิเคราะห์', 'error');
                 return;
             }
             
+            // Create compressed version for history
             const compressedResult = {
                 ...window.currentResult,
-                imageData: null,
+                imageData: null, // Don't save image in history
                 timestamp: window.currentResult.timestamp || new Date()
             };
             
             analysisHistory.push(compressedResult);
             
+            // Keep only last 20 records
             if (analysisHistory.length > 20) {
                 analysisHistory = analysisHistory.slice(-20);
             }
@@ -3437,6 +3400,7 @@ project-folder/
             const item = analysisHistory[index];
             displayResults(item);
             
+            // Scroll to results
             document.getElementById('analyze').scrollIntoView({ behavior: 'smooth' });
             
             showToast('กำลังแสดงผลจากประวัติ', 'info');
@@ -3451,6 +3415,9 @@ project-folder/
             }
         }
         
+        // ============================================
+        // Export Functions
+        // ============================================
         function exportToPDF() {
             if (!window.currentResult) {
                 showMessage('ไม่มีผลการวิเคราะห์', 'error');
@@ -3460,20 +3427,25 @@ project-folder/
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
+            // Add custom font for Thai
             doc.addFont('https://fonts.googleapis.com/css2?family=Prompt', 'Prompt', 'normal');
             
+            // Header
             doc.setFontSize(24);
             doc.setTextColor(16, 185, 129);
             doc.text('SoilAI Pro - รายงานการวิเคราะห์ดิน', 105, 20, { align: 'center' });
             
+            // Date
             doc.setFontSize(12);
             doc.setTextColor(55, 65, 81);
             doc.text(`วันที่: ${new Date().toLocaleDateString('th-TH')}`, 20, 40);
             doc.text(`เวลา: ${new Date().toLocaleTimeString('th-TH')}`, 20, 50);
             
+            // Divider
             doc.setDrawColor(229, 231, 235);
             doc.line(20, 60, 190, 60);
             
+            // Results
             doc.setFontSize(16);
             doc.setTextColor(16, 185, 129);
             doc.text('ผลการวิเคราะห์', 20, 75);
@@ -3486,6 +3458,7 @@ project-folder/
             doc.text(`ความชื้น: ${window.currentResult.moistureValue}`, 20, 120);
             doc.text(`อุณหภูมิที่เหมาะสม: ${window.currentResult.tempValue}°C`, 20, 130);
             
+            // Recommendations
             doc.setFontSize(16);
             doc.setTextColor(16, 185, 129);
             doc.text('คำแนะนำการดูแลดิน', 20, 150);
@@ -3503,6 +3476,7 @@ project-folder/
                 yPos += 3;
             });
             
+            // Suitable plants
             if (yPos < 250) {
                 doc.setFontSize(16);
                 doc.setTextColor(16, 185, 129);
@@ -3519,10 +3493,12 @@ project-folder/
                 });
             }
             
+            // Footer
             doc.setFontSize(10);
             doc.setTextColor(107, 114, 128);
             doc.text('Generated by SoilAI Pro - www.soilai.com', 105, 280, { align: 'center' });
             
+            // Save
             doc.save(`soil-analysis-${Date.now()}.pdf`);
             showToast('ดาวน์โหลด PDF แล้ว', 'success');
         }
@@ -3551,6 +3527,7 @@ project-folder/
                     csv += `"${plants}"\n`;
                 });
                 
+                // Download CSV
                 const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -3606,6 +3583,7 @@ project-folder/
                     console.log('Share cancelled');
                 });
             } else {
+                // Copy to clipboard
                 navigator.clipboard.writeText(text).then(() => {
                     showToast('คัดลอกผลลัพธ์แล้ว', 'success');
                 }).catch(() => {
@@ -3614,11 +3592,15 @@ project-folder/
             }
         }
         
+        // ============================================
+        // Theme Management
+        // ============================================
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkMode', isDark);
             
+            // Update icon with animation
             const icon = document.getElementById('themeIcon');
             if (icon) {
                 icon.style.transform = 'rotate(180deg)';
@@ -3639,6 +3621,9 @@ project-folder/
             }
         }
         
+        // ============================================
+        // Other Utility Functions
+        // ============================================
         function resetUpload() {
             const imageInput = document.getElementById('imageInput');
             const previewContainer = document.getElementById('previewContainer');
@@ -3656,6 +3641,10 @@ project-folder/
             showToast('รีเซ็ตแล้ว', 'info');
         }
         
+        // ============================================
+        // Performance Optimizations
+        // ============================================
+        // Intersection Observer for animations
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -100px 0px'
@@ -3670,6 +3659,7 @@ project-folder/
             });
         }, observerOptions);
         
+        // Observe elements with animations
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.feature-card, .stat-card').forEach(el => {
                 el.style.opacity = '0';
@@ -3679,41 +3669,58 @@ project-folder/
             });
         });
         
+        // ============================================
+        // Keyboard Shortcuts
+        // ============================================
         document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + O = Open file
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
                 document.getElementById('imageInput').click();
             }
             
+            // Ctrl/Cmd + S = Save to history
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
                 saveToHistory();
             }
             
+            // Ctrl/Cmd + E = Export PDF
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 exportToPDF();
             }
             
+            // Ctrl/Cmd + D = Toggle dark mode
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
                 e.preventDefault();
                 toggleTheme();
             }
         });
         
+        
+        // ============================================
+        // Recent Analyses Management with Size Limit
+        // ============================================
         function saveToRecent(result) {
             try {
+                // Get recent analyses from localStorage
                 let recentAnalyses = JSON.parse(localStorage.getItem('recentAnalyses') || '[]');
                 
+                // Create a lighter version of result (without full image)
                 const lightResult = {
                     ...result,
                     imageData: result.imageData ? result.imageData.substring(0, 100) + '...' : null,
                     thumbnail: result.imageData ? result.imageData : null
                 };
                 
+                // Add new result to beginning
                 recentAnalyses.unshift(lightResult);
+                
+                // Keep only last 3 (reduced from 5)
                 recentAnalyses = recentAnalyses.slice(0, 3);
                 
+                // Save back to localStorage
                 localStorage.setItem('recentAnalyses', JSON.stringify(recentAnalyses));
             } catch (e) {
                 if (e.name === 'QuotaExceededError') {
@@ -3723,9 +3730,167 @@ project-folder/
             }
         }
         
+        // AI Chatbot Script
+(function() {
+    const CHATBOT_API_URL = 'https://aichatbotfarmer-2.onrender.com/chat';
+    let isTyping = false;
+    
+    // Initialize chatbot
+    function initChatbot() {
+        const chatbotButton = document.getElementById('chatbotButton');
+        const chatbotPopup = document.getElementById('chatbotPopup');
+        const chatbotClose = document.getElementById('chatbotClose');
+        const chatbotInput = document.getElementById('chatbotInput');
+        const chatbotSend = document.getElementById('chatbotSend');
+        
+        // Toggle chatbot
+        chatbotButton.addEventListener('click', () => {
+            chatbotPopup.classList.toggle('active');
+            if (chatbotPopup.classList.contains('active')) {
+                chatbotInput.focus();
+                
+                // Show welcome message if first time
+                const messages = document.getElementById('chatbotMessages');
+                if (messages.children.length === 0) {
+                    addChatMessage('สวัสดีครับ! 👋 ผมคือ AI ผู้ช่วยด้านการเกษตร ยินดีให้คำปรึกษาเกี่ยวกับการปลูกพืช การดูแลดิน โรคพืช และเรื่องอื่นๆ ทางการเกษตรครับ', 'bot');
+                    showQuickActions();
+                }
+            }
+        });
+        
+        // Close chatbot
+        chatbotClose.addEventListener('click', () => {
+            chatbotPopup.classList.remove('active');
+        });
+        
+        // Send message on enter
+        chatbotInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+        
+        // Send button click
+        chatbotSend.addEventListener('click', sendChatMessage);
+        
+        // Show notification after delay
+        setTimeout(() => {
+            const notification = document.querySelector('.chatbot-notification');
+            notification.style.display = 'block';
+        }, 5000);
+    }
+    
+    // Show/hide quick actions
+    function showQuickActions() {
+        const quickActions = document.getElementById('quickActions');
+        quickActions.classList.add('show');
+    }
+    
+    function hideQuickActions() {
+        const quickActions = document.getElementById('quickActions');
+        quickActions.classList.remove('show');
+    }
+    
+    // Send quick message
+    window.sendQuickMessage = function(message) {
+        const input = document.getElementById('chatbotInput');
+        input.value = message;
+        sendChatMessage();
+    }
+    
+    // Add message to chat
+    function addChatMessage(message, sender) {
+        const messagesContainer = document.getElementById('chatbotMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${sender}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'chatbot-bubble';
+        bubble.textContent = message;
+        
+        messageDiv.appendChild(bubble);
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Send chat message
+    async function sendChatMessage() {
+        const input = document.getElementById('chatbotInput');
+        const message = input.value.trim();
+        
+        if (!message || isTyping) return;
+        
+        // Add user message
+        addChatMessage(message, 'user');
+        
+        // Clear input and hide quick actions
+        input.value = '';
+        hideQuickActions();
+        
+        // Show typing indicator
+        showTyping();
+        isTyping = true;
+        document.getElementById('chatbotSend').disabled = true;
+        
+        try {
+            const response = await fetch(CHATBOT_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            hideTyping();
+            
+            if (data.response) {
+                addChatMessage(data.response, 'bot');
+            } else if (data.error) {
+                addChatMessage('ขออภัย เกิดข้อผิดพลาด: ' + data.error, 'bot');
+            }
+            
+        } catch (error) {
+            hideTyping();
+            addChatMessage('ขออภัย ไม่สามารถเชื่อมต่อกับระบบได้ กรุณาลองใหม่อีกครั้ง', 'bot');
+        } finally {
+            isTyping = false;
+            document.getElementById('chatbotSend').disabled = false;
+            input.focus();
+        }
+    }
+    
+    // Show/hide typing indicator
+    function showTyping() {
+        document.getElementById('chatbotTyping').style.display = 'flex';
+        const messagesContainer = document.getElementById('chatbotMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function hideTyping() {
+        document.getElementById('chatbotTyping').style.display = 'none';
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initChatbot);
+    } else {
+        initChatbot();
+    }
+})();
+        
+        // ============================================
+        // Error Handling
+        // ============================================
         window.addEventListener('error', (e) => {
             console.error('Global error:', e);
             
+            // Don't show error for tensor disposal warnings or backend errors
             if (e.message && (e.message.includes('Tensor is disposed') || 
                              e.message.includes('backend') ||
                              e.message.includes('tf is not defined'))) {
@@ -3735,6 +3900,7 @@ project-folder/
             showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
         });
         
+        // Handle offline/online
         window.addEventListener('offline', () => {
             showToast('ไม่มีการเชื่อมต่ออินเทอร์เน็ต', 'error');
         });
@@ -3743,14 +3909,18 @@ project-folder/
             showToast('กลับมาออนไลน์แล้ว', 'success');
         });
         
+        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
+            // Dispose of TensorFlow resources
             if (model && model.dispose) {
                 model.dispose();
             }
             
+            // Stop camera stream if active
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
             }
+            
         });
     </script>
 </body>
