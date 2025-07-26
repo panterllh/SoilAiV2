@@ -14,9 +14,11 @@
     
     <!-- TensorFlow.js - Use stable version and load in correct order -->
     <!-- TensorFlow.js - Optimized loading with minimal bundle -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@3.20.0/dist/tf-core.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@3.20.0/dist/tf-converter.min.js" defer></script>
-     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@3.20.0/dist/tf-backend-webgl.min.js" defer></script>
+<!-- TensorFlow.js - Use minimal bundle for faster loading -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js" defer></script>
+
+<!-- Preload model.json if you know the path -->
+<link rel="preload" href="./tfjs_model/model.json" as="fetch" crossorigin="anonymous">
     
     <!-- jsPDF for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2411,17 +2413,21 @@
         };
         
         // Wait for TensorFlow.js to be ready
-        function waitForTensorFlow() {
-            return new Promise((resolve) => {
-                if (typeof tf !== 'undefined') {
-                    resolve();
-                } else {
-                    setTimeout(() => {
-                        waitForTensorFlow().then(resolve);
-                    }, 100);
-                }
-            });
-        }
+       // Wait for TensorFlow.js to be ready
+function waitForTensorFlow() {
+    return new Promise((resolve) => {
+        const checkTF = () => {
+            if (typeof tf !== 'undefined' && 
+                tf.loadLayersModel && 
+                tf.ready) {
+                resolve();
+            } else {
+                setTimeout(checkTF, 100);
+            }
+        };
+        checkTF();
+    });
+}
         
         // Initialize app with proper error handling
         // Initialize app with proper error handling
@@ -2470,11 +2476,17 @@ async function initializeApp() {
 }
 
 // Load TensorFlow and Model asynchronously
+// Load TensorFlow and Model asynchronously
 async function loadTensorFlowAndModel() {
     try {
         // Wait for TensorFlow
         await waitForTensorFlow();
-        console.log('TensorFlow.js loaded');
+        console.log('TensorFlow.js loaded:', tf.version);
+        
+        // Verify required functions exist
+        if (!tf.loadLayersModel) {
+            throw new Error('tf.loadLayersModel not available. Check TensorFlow.js imports.');
+        }
         
         // Use WebGL backend with low power preference
         await tf.setBackend('webgl');
@@ -2484,6 +2496,7 @@ async function loadTensorFlowAndModel() {
         tf.env().set('WEBGL_FORCE_F16_TEXTURES', true);
         tf.env().set('WEBGL_PACK', true);
         tf.env().set('WEBGL_EXP_CONV', true);
+        tf.env().set('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
         
         console.log('TensorFlow backend ready:', tf.getBackend());
         isTensorFlowReady = true;
