@@ -18,7 +18,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js" defer></script>
 
 <!-- Preload model.json if you know the path -->
-<link rel="preload" href="./tfjs_model/model.json" as="fetch" crossorigin="anonymous">
+<!-- Use prefetch instead of preload for resources used later -->
+<link rel="prefetch" href="./tfjs_model/model.json" as="fetch" crossorigin="anonymous">
     
     <!-- jsPDF for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2618,6 +2619,7 @@ project-folder/
         
         // Load TensorFlow model with better error handling
        // Load TensorFlow model with better error handling and optimization
+// Load TensorFlow model with better error handling and optimization
 async function loadModel() {
     try {
         // Check if TensorFlow is ready
@@ -2631,11 +2633,18 @@ async function loadModel() {
         // Model loading options for better performance
         const modelLoadOptions = {
             weightPathPrefix: './tfjs_model/',
-            requestInit: {
-                cache: 'force-cache', // Use browser cache
-                mode: 'cors'
+            fetchFunc: (url) => {
+                // Custom fetch with better caching
+                return fetch(url, {
+                    cache: 'force-cache',
+                    mode: 'cors',
+                    credentials: 'same-origin'
+                });
             }
         };
+        
+        // Show loading progress
+        showToast('กำลังโหลด AI Model 0%...', 'info');
         
         // Try loading from IndexedDB cache first
         let modelFromCache = null;
@@ -2644,66 +2653,80 @@ async function loadModel() {
             console.log('✅ Model loaded from cache');
             model = modelFromCache;
             isModelReady = true;
+            showToast('โหลด AI Model จาก cache สำเร็จ', 'success');
         } catch (cacheError) {
             console.log('Model not in cache, loading from server...');
             
-            // Try multiple paths for the model
-            const modelPaths = [
-                './tfjs_model/model.json',
-                '/tfjs_model/model.json',
-                'tfjs_model/model.json',
-                '../tfjs_model/model.json',
-                './SoilAiV2/tfjs_model/model.json'
-            ];
+            // Load with progress tracking
+            const modelUrl = './tfjs_model/model.json';
             
-            let modelLoaded = false;
-            let lastError = null;
-            
-            // Try each path
-            for (const path of modelPaths) {
-                try {
-                    console.log('Attempting to load model from:', path);
-                    
-                    // Load the model
-                    model = await tf.loadLayersModel(path, modelLoadOptions);
-                    
-                    // Save to IndexedDB for faster loading next time
-                    try {
-                        await model.save('indexeddb://soil-model-v2');
-                        console.log('Model saved to cache');
-                    } catch (saveError) {
-                        console.warn('Could not save model to cache:', saveError);
-                    }
-                    
-                    console.log('✅ Model loaded successfully');
-                    modelLoaded = true;
-                    isModelReady = true;
-                    break;
-                    
-                } catch (error) {
-                    lastError = error;
-                    console.error(`Failed to load from ${path}:`, error.message);
-                    continue;
+            try {
+                // First, fetch model.json to check if it exists
+                const response = await fetch(modelUrl, { 
+                    cache: 'no-cache',
+                    mode: 'cors' 
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            }
-            
-            if (!modelLoaded) {
-                throw new Error(`Could not load model from any path. Last error: ${lastError?.message}`);
+                
+                // Load the model
+                model = await tf.loadLayersModel(modelUrl, {
+                    ...modelLoadOptions,
+                    onProgress: (fraction) => {
+                        const percent = Math.round(fraction * 100);
+                        showToast(`กำลังโหลด AI Model ${percent}%...`, 'info');
+                    }
+                });
+                
+                // Save to IndexedDB for faster loading next time
+                try {
+                    await model.save('indexeddb://soil-model-v2');
+                    console.log('Model saved to cache');
+                } catch (saveError) {
+                    console.warn('Could not save model to cache:', saveError);
+                }
+                
+                console.log('✅ Model loaded successfully');
+                isModelReady = true;
+                
+            } catch (error) {
+                // Try other paths if first one fails
+                const alternativePaths = [
+                    '/tfjs_model/model.json',
+                    'tfjs_model/model.json',
+                    '../tfjs_model/model.json',
+                    './SoilAiV2/tfjs_model/model.json'
+                ];
+                
+                let loaded = false;
+                for (const path of alternativePaths) {
+                    try {
+                        console.log('Trying alternative path:', path);
+                        model = await tf.loadLayersModel(path, modelLoadOptions);
+                        loaded = true;
+                        isModelReady = true;
+                        break;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                if (!loaded) {
+                    throw error;
+                }
             }
         }
         
         // Optimize model for inference
         console.log('Optimizing model for inference...');
         
-        // Use tf.tidy to prevent memory leaks during warmup
-        tf.tidy(() => {
-            const warmupInput = tf.zeros([1, 224, 224, 3]);
-            const warmupOutput = model.predict(warmupInput);
-            // Force synchronous execution to warm up
-            warmupOutput.dataSync();
-            warmupOutput.dispose();
-            warmupInput.dispose();
-        });
+        // Warmup
+        const warmupInput = tf.zeros([1, 224, 224, 3]);
+        const warmupOutput = model.predict(warmupInput);
+        warmupOutput.dispose();
+        warmupInput.dispose();
         
         console.log('Model optimization complete');
         
@@ -2716,6 +2739,51 @@ async function loadModel() {
         isModelReady = false;
         throw error;
     }
+}
+
+// Dynamically preload model when user is likely to use it
+function preloadModelResources() {
+    // Only preload if not already loaded
+    if (!document.querySelector('link[href*="model.json"]')) {
+        const preloadLink = document.createElement('link');
+        preloadLink.rel = 'preload';
+        preloadLink.as = 'fetch';
+        preloadLink.href = './tfjs_model/model.json';
+        preloadLink.crossOrigin = 'anonymous';
+        document.head.appendChild(preloadLink);
+        
+        // Also preload weight files if you know their names
+        // Example:
+        // preloadWeightFile('./tfjs_model/group1-shard1of1.bin');
+    }
+}
+
+// Call when user shows intent to analyze
+function handleUserIntent() {
+    // Preload resources when user:
+    // - Hovers over analyze button
+    // - Clicks upload area
+    // - Selects a file
+    preloadModelResources();
+}
+
+// Add to setupEventListeners() function
+function setupEventListeners() {
+    const uploadArea = document.getElementById('uploadArea');
+    const imageInput = document.getElementById('imageInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    
+    // Existing listeners...
+    
+    // Preload on user interaction
+    uploadArea.addEventListener('mouseenter', preloadModelResources, { once: true });
+    uploadArea.addEventListener('click', preloadModelResources, { once: true });
+    
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('mouseenter', preloadModelResources, { once: true });
+    }
+    
+    // Rest of existing code...
 }
         
         // ============================================
