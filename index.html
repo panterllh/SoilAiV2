@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ระบบวิเคราะห์คุณภาพดินด้วย AI - วิเคราะห์ประเภทดิน ให้คำแนะนำการปลูกพืช">
     <title>SoilAI Pro - ระบบวิเคราะห์ดินอัจฉริยะ</title>
+    <!-- Preload and prefetch for faster loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     
     <!-- TensorFlow.js - Use stable version and load in correct order -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script></script>
+    <!-- TensorFlow.js - Optimized loading with minimal bundle -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@3.20.0/dist/tf-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@3.20.0/dist/tf-converter.min.js" defer></script>
+     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@3.20.0/dist/tf-backend-webgl.min.js" defer></script>
     
     <!-- jsPDF for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2418,71 +2424,91 @@
         }
         
         // Initialize app with proper error handling
-        async function initializeApp() {
-            try {
-                // Update preloader progress
-                updatePreloaderProgress(10);
-                
-                // Wait for TensorFlow.js to be fully loaded
-                await waitForTensorFlow();
-                console.log('TensorFlow.js loaded:', tf.version.tfjs);
-                updatePreloaderProgress(20);
-                
-                // Set backend explicitly and wait for it to be ready
-                await tf.setBackend('webgl');
-                await tf.ready();
-                console.log('TensorFlow backend ready:', tf.getBackend());
-                
-                // Test TensorFlow is working
-                const testTensor = tf.tensor([1, 2, 3]);
-                await testTensor.data();
-                testTensor.dispose();
-                console.log('TensorFlow test passed');
-                
-                isTensorFlowReady = true;
-                updatePreloaderProgress(30);
-                
-                // Load theme
-                checkTheme();
-                updatePreloaderProgress(40);
-                
-                // Setup event listeners
-                setupEventListeners();
-                updatePreloaderProgress(50);
-                
-                // Load model - MUST succeed for app to work
-                try {
-                    await loadModel();
-                    updatePreloaderProgress(80);
-                } catch (modelError) {
-                    // If model fails to load, show instructions
-                    hidePreloader();
-                    
-                    // Show detailed error modal
-                    showModelErrorInstructions();
-                    return; // Stop initialization
-                }
-                
-                // Load history
-                loadHistory();
-                updatePreloaderProgress(90);
-                
-                // Update stats
-                updateStats();
-                updatePreloaderProgress(100);
-                
-                // Hide preloader
-                setTimeout(() => {
-                    hidePreloader();
-                    showToast('ระบบพร้อมใช้งาน', 'success');
-                }, 500);
-                
-            } catch (error) {
-                console.error('Initialization error:', error);
-                hidePreloader();
-                showToast('เกิดข้อผิดพลาดในการเริ่มระบบ: ' + error.message, 'error');
+        // Initialize app with proper error handling
+async function initializeApp() {
+    try {
+        // Update preloader progress
+        updatePreloaderProgress(10);
+        
+        // Load other components first (don't wait for TF)
+        checkTheme();
+        setupEventListeners();
+        loadHistory();
+        updateStats();
+        updatePreloaderProgress(30);
+        
+        // Start loading TensorFlow in parallel
+        const tfLoadPromise = loadTensorFlowAndModel();
+        
+        // Show UI immediately
+        setTimeout(() => {
+            hidePreloader();
+            showToast('กำลังโหลด AI Model...', 'info');
+            
+            // Update button state
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (analyzeBtn) {
+                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังโหลด AI...';
+                analyzeBtn.disabled = true;
             }
-        }
+        }, 500);
+        
+        // Wait for TensorFlow to finish loading in background
+        tfLoadPromise.then(() => {
+            showToast('ระบบ AI พร้อมใช้งาน', 'success');
+            enableAnalyzeButton();
+        }).catch(error => {
+            console.error('Failed to load AI:', error);
+            showModelErrorInstructions();
+        });
+        
+    } catch (error) {
+        console.error('Initialization error:', error);
+        hidePreloader();
+        showToast('เกิดข้อผิดพลาดในการเริ่มระบบ', 'error');
+    }
+}
+
+// Load TensorFlow and Model asynchronously
+async function loadTensorFlowAndModel() {
+    try {
+        // Wait for TensorFlow
+        await waitForTensorFlow();
+        console.log('TensorFlow.js loaded');
+        
+        // Use WebGL backend with low power preference
+        await tf.setBackend('webgl');
+        await tf.ready();
+        
+        // Set WebGL flags for better performance
+        tf.env().set('WEBGL_FORCE_F16_TEXTURES', true);
+        tf.env().set('WEBGL_PACK', true);
+        tf.env().set('WEBGL_EXP_CONV', true);
+        
+        console.log('TensorFlow backend ready:', tf.getBackend());
+        isTensorFlowReady = true;
+        
+        // Load model
+        await loadModel();
+        
+    } catch (error) {
+        console.error('TensorFlow loading error:', error);
+        throw error;
+    }
+}
+
+// Enable analyze button when ready
+function enableAnalyzeButton() {
+    const btn = document.getElementById('analyzeBtn');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-search"></i> วิเคราะห์';
+        btn.disabled = false;
+        btn.classList.add('animate-pulse');
+        setTimeout(() => {
+            btn.classList.remove('animate-pulse');
+        }, 2000);
+    }
+}
         
         // Show detailed instructions when model fails to load
         function showModelErrorInstructions() {
@@ -2578,96 +2604,106 @@ project-folder/
         }
         
         // Load TensorFlow model with better error handling
-        async function loadModel() {
-            try {
-                // Check if TensorFlow is ready
-                if (!isTensorFlowReady || typeof tf === 'undefined') {
-                    throw new Error('TensorFlow.js not ready');
-                }
-                
-                // Ensure backend is ready
-                await tf.ready();
-                
-                // Update preloader text
-                document.querySelector('.preloader-text').textContent = 'กำลังโหลด AI Model...';
-                
-                // Try multiple paths for the model
-                const modelPaths = [
-                    './tfjs_model/model.json',
-                    '/tfjs_model/model.json',
-                    'tfjs_model/model.json',
-                    '../tfjs_model/model.json',
-                    './SoilAiV2/tfjs_model/model.json',
-                    'https://raw.githubusercontent.com/yourusername/yourrepo/main/tfjs_model/model.json'
-                ];
-                
-                let modelLoaded = false;
-                let lastError = null;
-                
-                // Try each path
-                for (const path of modelPaths) {
+       // Load TensorFlow model with better error handling and optimization
+async function loadModel() {
+    try {
+        // Check if TensorFlow is ready
+        if (!isTensorFlowReady || typeof tf === 'undefined') {
+            throw new Error('TensorFlow.js not ready');
+        }
+        
+        // Ensure backend is ready
+        await tf.ready();
+        
+        // Model loading options for better performance
+        const modelLoadOptions = {
+            weightPathPrefix: './tfjs_model/',
+            requestInit: {
+                cache: 'force-cache', // Use browser cache
+                mode: 'cors'
+            }
+        };
+        
+        // Try loading from IndexedDB cache first
+        let modelFromCache = null;
+        try {
+            modelFromCache = await tf.loadLayersModel('indexeddb://soil-model-v2');
+            console.log('✅ Model loaded from cache');
+            model = modelFromCache;
+            isModelReady = true;
+        } catch (cacheError) {
+            console.log('Model not in cache, loading from server...');
+            
+            // Try multiple paths for the model
+            const modelPaths = [
+                './tfjs_model/model.json',
+                '/tfjs_model/model.json',
+                'tfjs_model/model.json',
+                '../tfjs_model/model.json',
+                './SoilAiV2/tfjs_model/model.json'
+            ];
+            
+            let modelLoaded = false;
+            let lastError = null;
+            
+            // Try each path
+            for (const path of modelPaths) {
+                try {
+                    console.log('Attempting to load model from:', path);
+                    
+                    // Load the model
+                    model = await tf.loadLayersModel(path, modelLoadOptions);
+                    
+                    // Save to IndexedDB for faster loading next time
                     try {
-                        console.log('Attempting to load model from:', path);
-                        
-                        // Load the model with error handling
-                        model = await tf.loadLayersModel(path);
-                        
-                        // Verify model loaded correctly
-                        console.log('Model loaded, checking structure...');
-                        console.log('Model input shape:', model.inputs[0].shape);
-                        console.log('Model output shape:', model.outputs[0].shape);
-                        
-                        // Warmup the model
-                        console.log('Warming up model...');
-                        const dummyInput = tf.zeros([1, 224, 224, 3]);
-                        const warmupResult = model.predict(dummyInput);
-                        const warmupData = await warmupResult.data();
-                        warmupResult.dispose();
-                        dummyInput.dispose();
-                        
-                        console.log('✅ Model loaded and verified successfully');
-                        console.log('Warmup predictions:', warmupData);
-                        
-                        modelLoaded = true;
-                        isModelReady = true;
-                        break;
-                        
-                    } catch (error) {
-                        lastError = error;
-                        console.error(`Failed to load from ${path}:`, error.message);
-                        
-                        // If CORS error, suggest solution
-                        if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
-                            console.warn('💡 CORS error detected. Model files must be served from the same domain or have proper CORS headers.');
-                        }
-                        
-                        continue;
+                        await model.save('indexeddb://soil-model-v2');
+                        console.log('Model saved to cache');
+                    } catch (saveError) {
+                        console.warn('Could not save model to cache:', saveError);
                     }
+                    
+                    console.log('✅ Model loaded successfully');
+                    modelLoaded = true;
+                    isModelReady = true;
+                    break;
+                    
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Failed to load from ${path}:`, error.message);
+                    continue;
                 }
-                
-                if (!modelLoaded) {
-                    throw new Error(`Could not load model from any path. Last error: ${lastError?.message}`);
-                }
-                
-                // Update stats
-                animateValue('accuracyStat', 0, 96, 2000);
-                animateValue('imagesStat', 0, 180, 2000);
-                
-            } catch (error) {
-                console.error('Critical error loading model:', error);
-                isModelReady = false;
-                
-                // Show detailed error message
-                showToast(`ไม่สามารถโหลด Model: ${error.message}`, 'error');
-                
-                // Provide instructions
-                setTimeout(() => {
-                    showMessage('กรุณาตรวจสอบว่าไฟล์ model.json และ weight files อยู่ในโฟลเดอร์ tfjs_model/', 'error');
-                }, 1000);
-                
-                throw error; // Re-throw to stop initialization
+            }
+            
+            if (!modelLoaded) {
+                throw new Error(`Could not load model from any path. Last error: ${lastError?.message}`);
             }
         }
+        
+        // Optimize model for inference
+        console.log('Optimizing model for inference...');
+        
+        // Use tf.tidy to prevent memory leaks during warmup
+        tf.tidy(() => {
+            const warmupInput = tf.zeros([1, 224, 224, 3]);
+            const warmupOutput = model.predict(warmupInput);
+            // Force synchronous execution to warm up
+            warmupOutput.dataSync();
+            warmupOutput.dispose();
+            warmupInput.dispose();
+        });
+        
+        console.log('Model optimization complete');
+        
+        // Update stats
+        animateValue('accuracyStat', 0, 96, 2000);
+        animateValue('imagesStat', 0, 180, 2000);
+        
+    } catch (error) {
+        console.error('Critical error loading model:', error);
+        isModelReady = false;
+        throw error;
+    }
+}
         
         // ============================================
         // Color Analysis Helper
@@ -2978,7 +3014,8 @@ project-folder/
                 }
                 
                 // Preprocess image with TensorFlow
-                inputTensor = await preprocessImage(preview);
+                // Preprocess image with optimized function
+                inputTensor = await preprocessImageOptimized(preview);
                 console.log('Input tensor shape:', inputTensor.shape);
                 
                 // Make prediction using TensorFlow model
@@ -3041,6 +3078,69 @@ project-folder/
                 document.getElementById('analyzeBtn').style.display = 'inline-flex';
             }
         }
+        
+        // Optimized image preprocessing
+async function preprocessImageOptimized(imgElement) {
+    // Ensure TensorFlow is ready
+    if (typeof tf === 'undefined') {
+        throw new Error('TensorFlow.js not available');
+    }
+    
+    // Double check backend is ready
+    await tf.ready();
+    
+    // Process image inside tidy to prevent memory leaks
+    const processedTensor = tf.tidy(() => {
+        try {
+            // Resize image first to reduce memory usage
+            const targetSize = 224;
+            
+            // Create temporary canvas for resizing
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate aspect ratio
+            const aspectRatio = imgElement.width / imgElement.height;
+            let newWidth = targetSize;
+            let newHeight = targetSize;
+            
+            if (aspectRatio > 1) {
+                newHeight = targetSize / aspectRatio;
+            } else {
+                newWidth = targetSize * aspectRatio;
+            }
+            
+            // Set canvas size
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            
+            // Draw resized image centered
+            const offsetX = (targetSize - newWidth) / 2;
+            const offsetY = (targetSize - newHeight) / 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, targetSize, targetSize);
+            ctx.drawImage(imgElement, offsetX, offsetY, newWidth, newHeight);
+            
+            // Convert canvas to tensor
+            const imgTensor = tf.browser.fromPixels(canvas, 3);
+            
+            // Convert to float and normalize to [0, 1]
+            const normalized = imgTensor.toFloat().div(tf.scalar(255.0));
+            
+            // Add batch dimension [1, 224, 224, 3]
+            const batched = normalized.expandDims(0);
+            
+            // Return the processed tensor
+            return batched;
+            
+        } catch (error) {
+            console.error('Error in image preprocessing:', error);
+            throw error;
+        }
+    });
+    
+    return processedTensor;
+}
         
         // Check storage quota
         async function checkStorageQuota() {
