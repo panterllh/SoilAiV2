@@ -2434,6 +2434,7 @@ function waitForTensorFlow() {
         // Initialize app with proper error handling
 // Initialize app with proper error handling
 // Initialize app with proper error handling
+// Initialize app with proper error handling
 async function initializeApp() {
     try {
         // Update preloader progress
@@ -2485,19 +2486,37 @@ async function loadAIInBackground() {
         
     } catch (error) {
         console.error('Failed to load AI:', error);
-        
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        if (analyzeBtn) {
-            analyzeBtn.innerHTML = '<i class="fas fa-redo"></i> คลิกเพื่อลองใหม่';
-            analyzeBtn.disabled = false;
-            analyzeBtn.onclick = async () => {
-                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังโหลด...';
-                analyzeBtn.disabled = true;
-                await loadAIInBackground(); // Recursive call
-            };
-        }
-        
-        showToast('ไม่สามารถโหลด AI Model - คลิกปุ่มเพื่อลองใหม่', 'error');
+        handleAILoadError();
+    }
+}
+
+// Handle AI loading error
+function handleAILoadError() {
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (analyzeBtn) {
+        analyzeBtn.innerHTML = '<i class="fas fa-redo"></i> คลิกเพื่อลองใหม่';
+        analyzeBtn.disabled = false;
+        analyzeBtn.onclick = async () => {
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังโหลด...';
+            analyzeBtn.disabled = true;
+            await loadAIInBackground();
+        };
+    }
+    
+    showToast('ไม่สามารถโหลด AI Model - คลิกปุ่มเพื่อลองใหม่', 'error');
+}
+
+// Enable analyze button when ready
+function enableAnalyzeButton() {
+    const btn = document.getElementById('analyzeBtn');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-search"></i> วิเคราะห์';
+        btn.disabled = false;
+        btn.onclick = analyzeImage;
+        btn.classList.add('animate-pulse');
+        setTimeout(() => {
+            btn.classList.remove('animate-pulse');
+        }, 2000);
     }
 }
 
@@ -2845,11 +2864,6 @@ function addRetryButton() {
 }
 
 // Update the error handler in initializeApp()
-tfLoadPromise.catch(error => {
-    console.error('Failed to load AI:', error);
-    addRetryButton();
-    showToast('ไม่สามารถโหลด AI - คลิกปุ่มเพื่อลองใหม่', 'error');
-});
 
 // Dynamically preload model when user is likely to use it
 function preloadModelResources() {
