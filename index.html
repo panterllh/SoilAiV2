@@ -2433,6 +2433,7 @@ function waitForTensorFlow() {
         // Initialize app with proper error handling
         // Initialize app with proper error handling
 // Initialize app with proper error handling
+// Initialize app with proper error handling
 async function initializeApp() {
     try {
         // Update preloader progress
@@ -2444,14 +2445,6 @@ async function initializeApp() {
         loadHistory();
         updateStats();
         updatePreloaderProgress(30);
-        
-        // Start loading TensorFlow in parallel with timeout
-        const tfLoadPromise = Promise.race([
-            loadTensorFlowAndModel(),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Model loading timeout')), 30000) // 30 seconds timeout
-            )
-        ]);
         
         // Show UI immediately
         setTimeout(() => {
@@ -2466,25 +2459,8 @@ async function initializeApp() {
             }
         }, 500);
         
-        // Wait for TensorFlow to finish loading in background
-        tfLoadPromise.then(() => {
-            showToast('ระบบ AI พร้อมใช้งาน', 'success');
-            enableAnalyzeButton();
-        }).catch(error => {
-            console.error('Failed to load AI:', error);
-            
-            // Enable button but show warning
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            if (analyzeBtn) {
-                analyzeBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> โหลด AI ไม่สำเร็จ';
-                analyzeBtn.disabled = false;
-                analyzeBtn.onclick = () => {
-                    showModelErrorInstructions();
-                };
-            }
-            
-            showToast('ไม่สามารถโหลด AI Model - กรุณาตรวจสอบไฟล์', 'error');
-        });
+        // Load TensorFlow in background
+        loadAIInBackground();
         
     } catch (error) {
         console.error('Initialization error:', error);
@@ -2493,6 +2469,51 @@ async function initializeApp() {
     }
 }
 
+// Separate function to handle AI loading
+async function loadAIInBackground() {
+    try {
+        // Load with timeout
+        await Promise.race([
+            loadTensorFlowAndModel(),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Model loading timeout')), 30000)
+            )
+        ]);
+        
+        showToast('ระบบ AI พร้อมใช้งาน', 'success');
+        enableAnalyzeButton();
+        
+    } catch (error) {
+        console.error('Failed to load AI:', error);
+        
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        if (analyzeBtn) {
+            analyzeBtn.innerHTML = '<i class="fas fa-redo"></i> คลิกเพื่อลองใหม่';
+            analyzeBtn.disabled = false;
+            analyzeBtn.onclick = async () => {
+                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังโหลด...';
+                analyzeBtn.disabled = true;
+                await loadAIInBackground(); // Recursive call
+            };
+        }
+        
+        showToast('ไม่สามารถโหลด AI Model - คลิกปุ่มเพื่อลองใหม่', 'error');
+    }
+}
+
+// Enable analyze button when ready
+function enableAnalyzeButton() {
+    const btn = document.getElementById('analyzeBtn');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-search"></i> วิเคราะห์';
+        btn.disabled = false;
+        btn.onclick = analyzeImage; // Set correct onclick handler
+        btn.classList.add('animate-pulse');
+        setTimeout(() => {
+            btn.classList.remove('animate-pulse');
+        }, 2000);
+    }
+}
 // Load TensorFlow and Model asynchronously
 // Load TensorFlow and Model asynchronously
 async function loadTensorFlowAndModel() {
