@@ -3712,46 +3712,72 @@ function createProblemCard(problem) {
 }
 
 // New function to analyze visual problems from image
+// Improved visual problem analysis
 async function analyzeVisualProblems(imgElement, result) {
     const problems = [];
     
     // Get color analysis from the image
     const colorAnalysis = await analyzeImageColors(imgElement);
     const { brightness, saturation, brownScore, grayScore } = colorAnalysis.characteristics;
-    const avgColor = colorAnalysis.average;
     
-    // Detect texture patterns using canvas
+    // Get enhanced texture analysis
     const textureAnalysis = await analyzeTexture(imgElement);
     
-    // Check for soil cracking (แตกระแหง)
-    if (textureAnalysis.crackingScore > 0.3 || 
-        (brightness > 0.5 && saturation < 0.3 && textureAnalysis.contrastScore > 0.4)) {
-        problems.push({
-            type: 'visual',
-            visualIndicator: 'cracking',
-            severity: textureAnalysis.crackingScore > 0.5 ? 'critical' : 'high',
-            icon: 'fa-bolt',
-            color: '#dc2626',
-            title: 'ดินแตกระแหงรุนแรง',
-            description: 'พบรอยแตกบนผิวดินจำนวนมาก แสดงถึงการขาดน้ำอย่างรุนแรง',
-            effects: [
-                'รากพืชไม่สามารถชอนไชและเจริญเติบโตได้',
-                'การระบายอากาศในดินไม่ดี',
-                'สูญเสียความชื้นอย่างรวดเร็วเมื่อมีฝน',
-                'จุลินทรีย์ในดินตายหรือหยุดทำงาน'
-            ],
-            solutions: [
-                { icon: 'fa-tint', text: 'รดน้ำทันที แต่ค่อยๆ เพิ่มปริมาณ เริ่มจาก 5-10 ลิตร/ตร.ม.' },
-                { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 5-10 ซม. เพื่อรักษาความชื้น' },
-                { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอกหรือปุ๋ยหมัก 3-5 กก./ตร.ม. เพื่อปรับปรุงโครงสร้าง' },
-                { icon: 'fa-tools', text: 'พรวนดินเบาๆ เมื่อดินมีความชื้นพอเหมาะ' },
-                { icon: 'fa-calendar', text: 'ติดตั้งระบบน้ำหยดเพื่อให้น้ำสม่ำเสมอ' }
-            ]
-        });
+    console.log('Visual Analysis Results:', {
+        textureType: textureAnalysis.textureType,
+        crackingScore: textureAnalysis.crackingScore,
+        soilType: result.soilData.name,
+        moisture: result.moistureValue
+    });
+    
+    // Check for soil cracking - ใช้เกณฑ์ที่เข้มงวดขึ้น
+    if (textureAnalysis.textureType === 'cracked' && 
+        textureAnalysis.crackingScore > 0.5 && // เพิ่ม threshold
+        textureAnalysis.brownRatio < 0.3 && // ดินที่อุดมสมบูรณ์จะมีสีน้ำตาล
+        textureAnalysis.greenRatio < 0.1) { // ไม่มีพืชหรือความชื้น
+        
+        // ตรวจสอบเพิ่มเติมจากข้อมูลดิน
+        const isSandySoil = result.soilData.name === 'ดินทราย';
+        const isClayDry = result.soilData.name === 'ดินเหนียว' && result.moistureValue === 'แห้ง';
+        
+        if (isSandySoil || isClayDry || textureAnalysis.crackingScore > 0.7) {
+            problems.push({
+                type: 'visual',
+                visualIndicator: 'cracking',
+                severity: textureAnalysis.crackingScore > 0.7 ? 'critical' : 'high',
+                icon: 'fa-bolt',
+                color: '#dc2626',
+                title: 'ดินแตกระแหงรุนแรง',
+                description: 'พบรอยแตกบนผิวดินจำนวนมาก แสดงถึงการขาดน้ำอย่างรุนแรง',
+                effects: [
+                    'รากพืชไม่สามารถชอนไชและเจริญเติบโตได้',
+                    'การระบายอากาศในดินไม่ดี',
+                    'สูญเสียความชื้นอย่างรวดเร็วเมื่อมีฝน',
+                    'จุลินทรีย์ในดินตายหรือหยุดทำงาน'
+                ],
+                solutions: [
+                    { icon: 'fa-tint', text: 'รดน้ำทันที แต่ค่อยๆ เพิ่มปริมาณ เริ่มจาก 5-10 ลิตร/ตร.ม.' },
+                    { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 5-10 ซม. เพื่อรักษาความชื้น' },
+                    { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอกหรือปุ๋ยหมัก 3-5 กก./ตร.ม. เพื่อปรับปรุงโครงสร้าง' },
+                    { icon: 'fa-tools', text: 'พรวนดินเบาๆ เมื่อดินมีความชื้นพอเหมาะ' }
+                ]
+            });
+        }
     }
     
-    // Check for waterlogging (น้ำท่วมขัง)
-    if (grayScore > 0.7 || (brightness < 0.3 && avgColor.b > avgColor.r)) {
+    // Check for healthy moist soil
+    if (textureAnalysis.textureType === 'moist' || 
+        textureAnalysis.greenRatio > 0.15 ||
+        (textureAnalysis.brownRatio > 0.4 && brightness < 0.6)) {
+        // ดินมีความชื้นดี ไม่ต้องแสดงปัญหา
+        console.log('Soil appears healthy and moist');
+    }
+    
+    // Check for waterlogging - ปรับเกณฑ์ให้แม่นยำขึ้น
+    if ((textureAnalysis.textureType === 'moist' && brightness < 0.3) ||
+        (grayScore > 0.8 && textureAnalysis.greenRatio < 0.05) ||
+        (colorAnalysis.average.b > colorAnalysis.average.r * 1.2 && brightness < 0.4)) {
+        
         problems.push({
             type: 'visual',
             visualIndicator: 'waterlogging',
@@ -3773,8 +3799,10 @@ async function analyzeVisualProblems(imgElement, result) {
         });
     }
     
-    // Check for erosion (การกัดเซาะ)
-    if (textureAnalysis.roughnessScore > 0.6 && brightness > 0.6) {
+    // Check for erosion - เฉพาะเมื่อมีหลักฐานชัดเจน
+    if (textureAnalysis.roughnessScore > 0.7 && 
+        brightness > 0.7 &&
+        textureAnalysis.brownRatio < 0.2) {
         problems.push({
             type: 'visual',
             visualIndicator: 'erosion',
@@ -3798,13 +3826,14 @@ async function analyzeVisualProblems(imgElement, result) {
 }
 
 // New texture analysis function
+// Enhanced texture analysis function with better accuracy
 async function analyzeTexture(imgElement) {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
         // Resize for performance
-        const size = 200;
+        const size = 300; // เพิ่มขนาดเพื่อความแม่นยำ
         canvas.width = size;
         canvas.height = size;
         ctx.drawImage(imgElement, 0, 0, size, size);
@@ -3812,102 +3841,202 @@ async function analyzeTexture(imgElement) {
         const imageData = ctx.getImageData(0, 0, size, size);
         const data = imageData.data;
         
-        // Analyze texture characteristics
+        // Enhanced analysis variables
         let contrastSum = 0;
         let edgeCount = 0;
         let darkPixels = 0;
+        let brownPixels = 0;
+        let greenPixels = 0;
+        let grayPixels = 0;
+        let verticalLines = 0;
+        let horizontalLines = 0;
+        let diagonalLines = 0;
         
-        // Detect edges and contrast
+        // Color and pattern analysis
         for (let y = 1; y < size - 1; y++) {
             for (let x = 1; x < size - 1; x++) {
                 const idx = (y * size + x) * 4;
-                const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                const r = data[idx];
+                const g = data[idx + 1];
+                const b = data[idx + 2];
+                const brightness = (r + g + b) / 3;
                 
-                if (brightness < 100) darkPixels++;
+                // Count color types
+                if (brightness < 80) darkPixels++;
                 
-                // Simple edge detection
-                const rightIdx = idx + 4;
-                const bottomIdx = idx + size * 4;
+                // Detect brown soil (healthy soil color)
+                if (r > g && g > b && r - b > 30 && r < 150) {
+                    brownPixels++;
+                }
                 
-                if (rightIdx < data.length && bottomIdx < data.length) {
-                    const rightBrightness = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
-                    const bottomBrightness = (data[bottomIdx] + data[bottomIdx + 1] + data[bottomIdx + 2]) / 3;
+                // Detect green (plants/moss - indicates moisture)
+                if (g > r && g > b && g - Math.max(r, b) > 20) {
+                    greenPixels++;
+                }
+                
+                // Detect gray (could be dry but not necessarily cracked)
+                if (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && Math.abs(r - b) < 15) {
+                    grayPixels++;
+                }
+                
+                // Enhanced edge detection for crack patterns
+                if (x < size - 2 && y < size - 2) {
+                    // Get surrounding pixels
+                    const neighbors = [
+                        data[idx - 4], // left
+                        data[idx + 4], // right
+                        data[idx - size * 4], // top
+                        data[idx + size * 4], // bottom
+                        data[idx - size * 4 - 4], // top-left
+                        data[idx - size * 4 + 4], // top-right
+                        data[idx + size * 4 - 4], // bottom-left
+                        data[idx + size * 4 + 4]  // bottom-right
+                    ];
                     
-                    const edgeStrength = Math.abs(brightness - rightBrightness) + Math.abs(brightness - bottomBrightness);
-                    if (edgeStrength > 50) edgeCount++;
-                    contrastSum += edgeStrength;
+                    // Calculate local contrast
+                    let localContrast = 0;
+                    neighbors.forEach(neighbor => {
+                        localContrast += Math.abs(brightness - neighbor);
+                    });
+                    
+                    // Detect crack patterns (dark lines in bright background)
+                    if (localContrast > 400 && brightness < 100) {
+                        edgeCount++;
+                        
+                        // Check line direction for crack pattern
+                        const horizontal = Math.abs(data[idx - 4] - data[idx + 4]);
+                        const vertical = Math.abs(data[idx - size * 4] - data[idx + size * 4]);
+                        const diagonal1 = Math.abs(data[idx - size * 4 - 4] - data[idx + size * 4 + 4]);
+                        const diagonal2 = Math.abs(data[idx - size * 4 + 4] - data[idx + size * 4 - 4]);
+                        
+                        if (horizontal > 50) horizontalLines++;
+                        if (vertical > 50) verticalLines++;
+                        if (diagonal1 > 50 || diagonal2 > 50) diagonalLines++;
+                    }
+                    
+                    contrastSum += localContrast;
                 }
             }
         }
         
         const totalPixels = size * size;
-        const crackingScore = edgeCount / totalPixels;
-        const contrastScore = contrastSum / (totalPixels * 255);
-        const roughnessScore = Math.min(edgeCount / (totalPixels * 0.1), 1);
+        
+        // Calculate ratios
+        const brownRatio = brownPixels / totalPixels;
+        const greenRatio = greenPixels / totalPixels;
+        const grayRatio = grayPixels / totalPixels;
+        const darkRatio = darkPixels / totalPixels;
+        
+        // Calculate crack pattern score with multiple factors
+        let crackingScore = 0;
+        
+        // Factor 1: Line patterns (cracks have interconnected lines)
+        const linePatternScore = (verticalLines + horizontalLines + diagonalLines) / (totalPixels * 0.05);
+        
+        // Factor 2: High contrast with specific pattern
+        const contrastScore = contrastSum / (totalPixels * 255 * 8);
+        
+        // Factor 3: Color indicates dryness (not brown, not green)
+        const drynessColorScore = 1 - (brownRatio + greenRatio);
+        
+        // Factor 4: Dark lines in bright background pattern
+        const crackPatternScore = (edgeCount / totalPixels) * (1 - darkRatio);
+        
+        // Combine factors with weights
+        if (linePatternScore > 0.1 && contrastScore > 0.3 && drynessColorScore > 0.7) {
+            crackingScore = (
+                linePatternScore * 0.3 +
+                contrastScore * 0.3 +
+                drynessColorScore * 0.2 +
+                crackPatternScore * 0.2
+            );
+        }
+        
+        // Detect texture type
+        let textureType = 'normal';
+        if (crackingScore > 0.4) {
+            textureType = 'cracked';
+        } else if (greenRatio > 0.2) {
+            textureType = 'moist';
+        } else if (brownRatio > 0.4) {
+            textureType = 'loamy';
+        } else if (grayRatio > 0.5) {
+            textureType = 'sandy';
+        }
+        
+        console.log('Texture Analysis:', {
+            brownRatio: (brownRatio * 100).toFixed(1) + '%',
+            greenRatio: (greenRatio * 100).toFixed(1) + '%',
+            grayRatio: (grayRatio * 100).toFixed(1) + '%',
+            crackingScore: crackingScore.toFixed(2),
+            textureType
+        });
         
         resolve({
-            crackingScore: Math.min(crackingScore * 2, 1),
+            crackingScore: Math.min(crackingScore, 1),
             contrastScore,
-            roughnessScore,
-            darkPixelRatio: darkPixels / totalPixels
+            roughnessScore: linePatternScore,
+            darkPixelRatio: darkRatio,
+            brownRatio,
+            greenRatio,
+            grayRatio,
+            textureType
         });
     });
 }
 
 // Enhanced moisture problem detection
+// Enhanced moisture problem detection
 function analyzeMoistureProblem(moisture, soilType, hasVisualCracking) {
-    // Override với visual evidence
+    // ถ้ามี visual cracking แล้ว ไม่ต้องแสดงปัญหาความชื้นซ้ำ
     if (hasVisualCracking) {
-        return {
-            type: 'moisture',
-            severity: 'critical',
-            icon: 'fa-tint-slash',
-            color: '#dc2626',
-            title: 'ขาดน้ำอย่างรุนแรง',
-            description: 'ดินแห้งจนแตกระแหง ต้องการน้ำอย่างเร่งด่วน',
-            effects: [
-                'พืชอยู่ในภาวะ stress รุนแรง อาจตายได้',
-                'ระบบรากถูกทำลายจากการแตกของดิน',
-                'ไม่สามารถดูดซึมธาตุอาหารได้'
-            ],
-            solutions: [
-                { icon: 'fa-exclamation', text: 'รดน้ำทันที! เริ่มด้วยน้ำเล็กน้อยก่อน แล้วค่อยๆ เพิ่ม' },
-                { icon: 'fa-tint', text: 'รดน้ำ 2-3 ครั้งต่อวัน จนดินอิ่มน้ำ' },
-                { icon: 'fa-umbrella', text: 'สร้างร่มเงาชั่วคราวเพื่อลดการระเหยน้ำ' }
-            ]
-        };
+        return null; // ให้ visual problem เป็นตัวหลัก
     }
     
-    // Normal moisture analysis
+    // Normal moisture analysis สำหรับกรณีที่ไม่มี visual evidence
     const moistureProblems = {
         'แห้ง': {
-            severity: 'high',
-            effects: ['พืชขาดน้ำ', 'การเจริญเติบโตหยุดชะงัก'],
-            solutions: [
-                { icon: 'fa-tint', text: 'เพิ่มความถี่การรดน้ำ' },
-                { icon: 'fa-cloud-rain', text: 'ติดตั้งระบบสปริงเกลอร์' }
-            ]
-        },
-        'ปกติ': null,
-        'ชื้น': {
-            severity: 'low',
-            effects: ['อาจมีปัญหาโรคราก'],
-            solutions: [
-                { icon: 'fa-wind', text: 'เพิ่มการระบายอากาศ' }
-            ]
+            'ดินร่วน': {
+                severity: 'medium',
+                effects: ['พืชขาดน้ำ ใบห่อและเหี่ยว', 'รากพืชไม่สามารถดูดธาตุอาหารได้ดี'],
+                solutions: [
+                    { icon: 'fa-tint', text: 'เพิ่มความถี่ในการรดน้ำเป็นวันละครั้ง' },
+                    { icon: 'fa-tint', text: 'คลุมดินด้วยฟางหรือใบไม้แห้ง' }
+                ]
+            },
+            'ดินเหนียว': {
+                severity: 'high',
+                effects: ['ดินแตกระแหง รากพืชชอนไชยาก', 'อากาศไม่ถ่ายเท'],
+                solutions: [
+                    { icon: 'fa-tint', text: 'รดน้ำทีละน้อยแต่บ่อยครั้ง' },
+                    { icon: 'fa-tint', text: 'ผสมปุ๋ยคอกหรือแกลบเพื่อปรับโครงสร้างดิน' }
+                ]
+            },
+            'ดินทราย': {
+                severity: 'medium',
+                effects: ['น้ำระเหยเร็ว พืชขาดน้ำ'],
+                solutions: [
+                    { icon: 'fa-tint', text: 'รดน้ำบ่อยขึ้น วันละ 2 ครั้ง' },
+                    { icon: 'fa-tint', text: 'ติดตั้งระบบน้ำหยด' }
+                ]
+            }
         }
     };
     
-    const problem = moistureProblems[moisture];
+    if (moisture === 'ปกติ' || moisture === 'ชื้น') {
+        return null; // ไม่มีปัญหา
+    }
+    
+    const problem = moistureProblems[moisture]?.[soilType];
     if (!problem) return null;
     
     return {
         type: 'moisture',
         severity: problem.severity,
-        icon: moisture === 'แห้ง' ? 'fa-tint-slash' : 'fa-tint',
+        icon: 'fa-tint-slash',
         color: problem.severity === 'high' ? '#ef4444' : '#f59e0b',
-        title: `ความชื้น${moisture}`,
-        description: `ระดับความชื้นไม่เหมาะสมสำหรับ${soilType}`,
+        title: `ความชื้น${moisture}สำหรับ${soilType}`,
+        description: `ระดับความชื้นต่ำเกินไปสำหรับ${soilType}`,
         effects: problem.effects,
         solutions: problem.solutions
     };
