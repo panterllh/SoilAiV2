@@ -2094,6 +2094,39 @@ body.dark-mode .solution-item {
     animation: problemPulse 1s ease-in-out infinite;
 }
 
+/* Soil Problems Analysis Section */
+.soil-problems-section {
+    margin-top: 30px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.no-problems-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.1));
+    padding: 40px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    border: 2px solid var(--success-color);
+    animation: slideInUp 0.5s ease-out;
+}
+
+.problem-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.problem-card.animate-slideInUp {
+    animation: slideInUp 0.5s ease-out forwards;
+}
+
+/* เพิ่ม CSS ที่เหลือตามที่ให้ไว้ก่อนหน้านี้ */
+
     </style>
 </head>
     
