@@ -3263,7 +3263,7 @@ project-folder/
                 result.timestamp = new Date();
                 
                 // Show results with animation
-                displayResults(result);
+                await displayResults(result);
                 
                 // Update stats
                 analyzeCount++;
@@ -3784,7 +3784,7 @@ function prioritizeProblems(problems) {
         // ============================================
         // Display Results
         // ============================================
-        function displayResults(result) {
+        async function displayResults(result) {
             // Show result section with animation
             const resultDisplay = document.getElementById('resultDisplay');
             resultDisplay.style.display = 'block';
@@ -4084,9 +4084,9 @@ function createProblemCard(problem) {
             container.innerHTML = html;
         }
         
-        function viewHistoryItem(index) {
-            const item = analysisHistory[index];
-            displayResults(item);
+        async function viewHistoryItem(index) {
+    const item = analysisHistory[index];
+    await displayResults(item);
             
             // Scroll to results
             document.getElementById('analyze').scrollIntoView({ behavior: 'smooth' });
