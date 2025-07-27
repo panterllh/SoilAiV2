@@ -3818,7 +3818,8 @@ function prioritizeProblems(problems) {
 // document.getElementById('tempValue').textContent = result.tempValue;
 
 // Analyze and display problems
-const problems = analyzeSoilProblems(result);
+const previewImage = document.getElementById('previewImage');
+const problems = await analyzeSoilProblems(result, previewImage);
 
 
 // Create or update problems section
