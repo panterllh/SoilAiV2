@@ -2081,6 +2081,7 @@ body.dark-mode .solution-item {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.9; transform: scale(1.05); }
 }
+
     </style>
 </head>
     
@@ -3503,6 +3504,166 @@ async function analyzeSoilProblems(result, imageElement) {
     
     // Remove duplicates and prioritize
     return prioritizeProblems(problems);
+}
+
+// เพิ่มฟังก์ชันเหล่านี้หลังจาก analyzeSoilProblems function
+
+function analyzePHProblem(phValue, idealRange) {
+    if (phValue < idealRange.min - 0.5) {
+        return {
+            type: 'ph',
+            severity: 'high',
+            icon: 'fa-flask',
+            color: '#ef4444',
+            title: 'ดินมีความเป็นกรดสูง',
+            description: `pH ${phValue.toFixed(1)} ต่ำกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
+            effects: [
+                'ธาตุอาหารบางชนิดละลายน้ำได้ยาก พืชดูดซึมไม่ได้',
+                'อลูมิเนียมและแมงกานีสละลายมากเกินไป เป็นพิษต่อพืช',
+                'จุลินทรีย์ที่เป็นประโยชน์ทำงานได้ไม่ดี'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ใส่ปูนขาว (CaCO₃) 200-300 กก./ไร่ ผสมคลุกเคล้ากับดิน' },
+                { icon: 'fa-check', text: 'ใส่ปูนโดโลไมต์ สำหรับดินที่ขาดแมกนีเซียม' },
+                { icon: 'fa-check', text: 'ใส่เถ้าไม้ 100-150 กก./ไร่ (ให้ผลช้ากว่าปูน)' },
+                { icon: 'fa-check', text: 'รอ 2-4 สัปดาห์หลังใส่ปูนก่อนปลูกพืช' }
+            ]
+        };
+    } else if (phValue > idealRange.max + 0.5) {
+        return {
+            type: 'ph',
+            severity: 'high',
+            icon: 'fa-flask',
+            color: '#ef4444',
+            title: 'ดินมีความเป็นด่างสูง',
+            description: `pH ${phValue.toFixed(1)} สูงกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
+            effects: [
+                'ธาตุเหล็ก แมงกานีส ทองแดง สังกะสี ไม่ละลาย พืชขาดธาตุอาหาร',
+                'ฟอสฟอรัสถูกตรึงในดิน พืชดูดซึมไม่ได้',
+                'ใบพืชเหลืองซีด เนื่องจากขาดธาตุเหล็ก'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ใส่กำมะถัน 50-100 กก./ไร่ ผสมกับดิน' },
+                { icon: 'fa-check', text: 'ใส่ปุ๋ยคอกหรือปุ๋ยหมัก 2-3 ตัน/ไร่' },
+                { icon: 'fa-check', text: 'ใช้ปุ๋ยแอมโมเนียมซัลเฟต แทนยูเรีย' },
+                { icon: 'fa-check', text: 'ปลูกพืชตระกูลถั่วเพื่อปรับสภาพดิน' }
+            ]
+        };
+    } else if (Math.abs(phValue - ((idealRange.min + idealRange.max) / 2)) > 0.3) {
+        return {
+            type: 'ph',
+            severity: 'low',
+            icon: 'fa-info-circle',
+            color: '#f59e0b',
+            title: 'pH ใกล้ขอบเขตมาตรฐาน',
+            description: `pH ${phValue.toFixed(1)} อยู่ในช่วงที่ยอมรับได้ แต่ควรเฝ้าระวัง`,
+            effects: [],
+            solutions: [
+                { icon: 'fa-check', text: 'ตรวจ pH อย่างสม่ำเสมอทุก 3-6 เดือน' },
+                { icon: 'fa-check', text: 'ใส่ปุ๋ยอินทรีย์เพื่อช่วยรักษา pH' }
+            ]
+        };
+    }
+    return null;
+}
+
+function analyzeTemperatureProblem(temp, idealRange) {
+    if (temp < idealRange.min - 3) {
+        return {
+            type: 'temperature',
+            severity: 'medium',
+            icon: 'fa-thermometer-empty',
+            color: '#3b82f6',
+            title: 'อุณหภูมิต่ำเกินไป',
+            description: `อุณหภูมิ ${temp}°C ต่ำกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
+            effects: [
+                'พืชเจริญเติบโตช้า',
+                'การดูดซึมธาตุอาหารลดลง',
+                'เสี่ยงต่อโรคเชื้อรา'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'คลุมดินด้วยพลาสติกสีดำเพื่อเก็บความร้อน' },
+                { icon: 'fa-check', text: 'สร้างโรงเรือนหรือที่กำบังลม' },
+                { icon: 'fa-check', text: 'เลือกปลูกพืชที่ทนอากาศเย็น' }
+            ]
+        };
+    } else if (temp > idealRange.max + 3) {
+        return {
+            type: 'temperature',
+            severity: 'medium',
+            icon: 'fa-thermometer-full',
+            color: '#ef4444',
+            title: 'อุณหภูมิสูงเกินไป',
+            description: `อุณหภูมิ ${temp}°C สูงกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
+            effects: [
+                'พืชสูญเสียน้ำมาก',
+                'ใบไหม้และเหี่ยว',
+                'ดอกร่วงก่อนติดผล'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ติดตั้งตาข่ายพรางแสง 50-70%' },
+                { icon: 'fa-check', text: 'เพิ่มความถี่ในการรดน้ำ' },
+                { icon: 'fa-check', text: 'ปลูกพืชคลุมดินหรือพืชให้ร่มเงา' }
+            ]
+        };
+    }
+    return null;
+}
+
+// Helper function to create problem card
+function createProblemCard(problem) {
+    const card = document.createElement('div');
+    card.className = 'problem-card';
+    card.setAttribute('data-severity', problem.severity);
+    
+    const effectsList = problem.effects.map(effect => 
+        `<li><i class="fas fa-angle-right"></i> ${effect}</li>`
+    ).join('');
+    
+    const solutionsList = problem.solutions.map(solution => 
+        `<div class="solution-item">
+            <i class="fas ${solution.icon}"></i>
+            <span>${solution.text}</span>
+        </div>`
+    ).join('');
+    
+    const severityText = {
+        'critical': 'วิกฤต',
+        'high': 'สำคัญ',
+        'medium': 'ปานกลาง',
+        'low': 'เฝ้าระวัง'
+    };
+    
+    card.innerHTML = `
+        <div class="problem-header">
+            <div class="problem-icon" style="background-color: ${problem.color}20; color: ${problem.color};">
+                <i class="fas ${problem.icon}"></i>
+            </div>
+            <div class="problem-title-section">
+                <h4 class="problem-title">${problem.title}</h4>
+                <p class="problem-description">${problem.description}</p>
+            </div>
+            <div class="severity-badge severity-${problem.severity}">
+                ${severityText[problem.severity] || problem.severity}
+            </div>
+        </div>
+        
+        ${problem.effects.length > 0 ? `
+            <div class="problem-effects">
+                <h5><i class="fas fa-exclamation-circle"></i> ผลกระทบที่อาจเกิดขึ้น</h5>
+                <ul>${effectsList}</ul>
+            </div>
+        ` : ''}
+        
+        <div class="problem-solutions">
+            <h5><i class="fas fa-tools"></i> วิธีแก้ไข</h5>
+            <div class="solutions-list">
+                ${solutionsList}
+            </div>
+        </div>
+    `;
+    
+    return card;
 }
 
 // New function to analyze visual problems from image
