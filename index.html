@@ -2064,6 +2064,23 @@ body.dark-mode .solution-item {
 .problem-card[data-severity="high"] {
     animation: problemPulse 2s ease-in-out infinite;
 }
+
+/* เพิ่มใน CSS section */
+.severity-critical {
+    background: #7c2d12;
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.problem-card[data-severity="critical"] {
+    border-left: 4px solid #7c2d12;
+    animation: problemPulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.05); }
+}
     </style>
 </head>
     
@@ -3447,187 +3464,321 @@ project-folder/
         // ============================================
 // Soil Problem Analysis Functions
 // ============================================
-function analyzeSoilProblems(result) {
+// ============================================
+// Enhanced Soil Problem Analysis Functions
+// ============================================
+async function analyzeSoilProblems(result, imageElement) {
     const problems = [];
     const { phValue, moistureValue, tempValue, soilData } = result;
     
-    // Parse pH range
+    // Analyze visual characteristics from image
+    let visualProblems = [];
+    if (imageElement) {
+        visualProblems = await analyzeVisualProblems(imageElement, result);
+        problems.push(...visualProblems);
+    }
+    
+    // Parse values
     const [phMin, phMax] = phValue.split('-').map(Number);
     const phAvg = (phMin + phMax) / 2;
-    
-    // Parse temperature range
     const [tempMin, tempMax] = tempValue.split('-').map(Number);
     const tempAvg = (tempMin + tempMax) / 2;
     
-    // Analyze pH problems
+    // Enhanced pH analysis
     const phProblem = analyzePHProblem(phAvg, soilData.phRange);
     if (phProblem) problems.push(phProblem);
     
-    // Analyze moisture problems
-    const moistureProblem = analyzeMoistureProblem(moistureValue, soilData.name);
+    // Enhanced moisture analysis with visual cues
+    const hasCrackingProblem = visualProblems.some(p => p.visualIndicator === 'cracking');
+    const moistureProblem = analyzeMoistureProblem(moistureValue, soilData.name, hasCrackingProblem);
     if (moistureProblem) problems.push(moistureProblem);
     
-    // Analyze temperature problems
+    // Temperature analysis
     const tempProblem = analyzeTemperatureProblem(tempAvg, soilData.tempRange);
     if (tempProblem) problems.push(tempProblem);
+    
+    // Soil-specific problems
+    const specificProblems = analyzeSoilSpecificProblems(result);
+    problems.push(...specificProblems);
+    
+    // Remove duplicates and prioritize
+    return prioritizeProblems(problems);
+}
+
+// New function to analyze visual problems from image
+async function analyzeVisualProblems(imgElement, result) {
+    const problems = [];
+    
+    // Get color analysis from the image
+    const colorAnalysis = await analyzeImageColors(imgElement);
+    const { brightness, saturation, brownScore, grayScore } = colorAnalysis.characteristics;
+    const avgColor = colorAnalysis.average;
+    
+    // Detect texture patterns using canvas
+    const textureAnalysis = await analyzeTexture(imgElement);
+    
+    // Check for soil cracking (แตกระแหง)
+    if (textureAnalysis.crackingScore > 0.3 || 
+        (brightness > 0.5 && saturation < 0.3 && textureAnalysis.contrastScore > 0.4)) {
+        problems.push({
+            type: 'visual',
+            visualIndicator: 'cracking',
+            severity: textureAnalysis.crackingScore > 0.5 ? 'critical' : 'high',
+            icon: 'fa-bolt',
+            color: '#dc2626',
+            title: 'ดินแตกระแหงรุนแรง',
+            description: 'พบรอยแตกบนผิวดินจำนวนมาก แสดงถึงการขาดน้ำอย่างรุนแรง',
+            effects: [
+                'รากพืชไม่สามารถชอนไชและเจริญเติบโตได้',
+                'การระบายอากาศในดินไม่ดี',
+                'สูญเสียความชื้นอย่างรวดเร็วเมื่อมีฝน',
+                'จุลินทรีย์ในดินตายหรือหยุดทำงาน'
+            ],
+            solutions: [
+                { icon: 'fa-tint', text: 'รดน้ำทันที แต่ค่อยๆ เพิ่มปริมาณ เริ่มจาก 5-10 ลิตร/ตร.ม.' },
+                { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 5-10 ซม. เพื่อรักษาความชื้น' },
+                { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอกหรือปุ๋ยหมัก 3-5 กก./ตร.ม. เพื่อปรับปรุงโครงสร้าง' },
+                { icon: 'fa-tools', text: 'พรวนดินเบาๆ เมื่อดินมีความชื้นพอเหมาะ' },
+                { icon: 'fa-calendar', text: 'ติดตั้งระบบน้ำหยดเพื่อให้น้ำสม่ำเสมอ' }
+            ]
+        });
+    }
+    
+    // Check for waterlogging (น้ำท่วมขัง)
+    if (grayScore > 0.7 || (brightness < 0.3 && avgColor.b > avgColor.r)) {
+        problems.push({
+            type: 'visual',
+            visualIndicator: 'waterlogging',
+            severity: 'high',
+            icon: 'fa-water',
+            color: '#3b82f6',
+            title: 'ดินมีน้ำท่วมขังหรือชื้นเกินไป',
+            description: 'สีดินบ่งบอกถึงการขังน้ำหรือการระบายน้ำไม่ดี',
+            effects: [
+                'รากพืชขาดออกซิเจน อาจเน่าตาย',
+                'เกิดโรคเชื้อราได้ง่าย',
+                'ธาตุอาหารถูกชะล้าง'
+            ],
+            solutions: [
+                { icon: 'fa-arrow-up', text: 'ยกแปลงปลูกสูง 20-30 ซม.' },
+                { icon: 'fa-route', text: 'ขุดร่องระบายน้ำรอบแปลง' },
+                { icon: 'fa-ban', text: 'หยุดรดน้ำชั่วคราวจนดินแห้ง' }
+            ]
+        });
+    }
+    
+    // Check for erosion (การกัดเซาะ)
+    if (textureAnalysis.roughnessScore > 0.6 && brightness > 0.6) {
+        problems.push({
+            type: 'visual',
+            visualIndicator: 'erosion',
+            severity: 'medium',
+            icon: 'fa-mountain',
+            color: '#f59e0b',
+            title: 'มีการกัดเซาะหน้าดิน',
+            description: 'พื้นผิวขรุขระ อาจมีการพังทลายของหน้าดิน',
+            effects: [
+                'สูญเสียดินชั้นบนที่อุดมสมบูรณ์',
+                'ธาตุอาหารถูกชะล้าง'
+            ],
+            solutions: [
+                { icon: 'fa-tree', text: 'ปลูกพืชคลุมดินหรือหญ้าแฝก' },
+                { icon: 'fa-layer-group', text: 'ทำขั้นบันไดดินในพื้นที่ลาดชัน' }
+            ]
+        });
+    }
     
     return problems;
 }
 
-function analyzePHProblem(phValue, idealRange) {
-    if (phValue < idealRange.min - 0.5) {
+// New texture analysis function
+async function analyzeTexture(imgElement) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Resize for performance
+        const size = 200;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.drawImage(imgElement, 0, 0, size, size);
+        
+        const imageData = ctx.getImageData(0, 0, size, size);
+        const data = imageData.data;
+        
+        // Analyze texture characteristics
+        let contrastSum = 0;
+        let edgeCount = 0;
+        let darkPixels = 0;
+        
+        // Detect edges and contrast
+        for (let y = 1; y < size - 1; y++) {
+            for (let x = 1; x < size - 1; x++) {
+                const idx = (y * size + x) * 4;
+                const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                
+                if (brightness < 100) darkPixels++;
+                
+                // Simple edge detection
+                const rightIdx = idx + 4;
+                const bottomIdx = idx + size * 4;
+                
+                if (rightIdx < data.length && bottomIdx < data.length) {
+                    const rightBrightness = (data[rightIdx] + data[rightIdx + 1] + data[rightIdx + 2]) / 3;
+                    const bottomBrightness = (data[bottomIdx] + data[bottomIdx + 1] + data[bottomIdx + 2]) / 3;
+                    
+                    const edgeStrength = Math.abs(brightness - rightBrightness) + Math.abs(brightness - bottomBrightness);
+                    if (edgeStrength > 50) edgeCount++;
+                    contrastSum += edgeStrength;
+                }
+            }
+        }
+        
+        const totalPixels = size * size;
+        const crackingScore = edgeCount / totalPixels;
+        const contrastScore = contrastSum / (totalPixels * 255);
+        const roughnessScore = Math.min(edgeCount / (totalPixels * 0.1), 1);
+        
+        resolve({
+            crackingScore: Math.min(crackingScore * 2, 1),
+            contrastScore,
+            roughnessScore,
+            darkPixelRatio: darkPixels / totalPixels
+        });
+    });
+}
+
+// Enhanced moisture problem detection
+function analyzeMoistureProblem(moisture, soilType, hasVisualCracking) {
+    // Override với visual evidence
+    if (hasVisualCracking) {
         return {
-            type: 'ph',
-            severity: 'high',
-            icon: 'fa-flask',
-            color: '#ef4444',
-            title: 'ดินมีความเป็นกรดสูง',
-            description: `pH ${phValue.toFixed(1)} ต่ำกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
+            type: 'moisture',
+            severity: 'critical',
+            icon: 'fa-tint-slash',
+            color: '#dc2626',
+            title: 'ขาดน้ำอย่างรุนแรง',
+            description: 'ดินแห้งจนแตกระแหง ต้องการน้ำอย่างเร่งด่วน',
             effects: [
-                'ธาตุอาหารบางชนิดละลายน้ำได้ยาก พืชดูดซึมไม่ได้',
-                'อลูมิเนียมและแมงกานีสละลายมากเกินไป เป็นพิษต่อพืช',
-                'จุลินทรีย์ที่เป็นประโยชน์ทำงานได้ไม่ดี'
+                'พืชอยู่ในภาวะ stress รุนแรง อาจตายได้',
+                'ระบบรากถูกทำลายจากการแตกของดิน',
+                'ไม่สามารถดูดซึมธาตุอาหารได้'
             ],
             solutions: [
-                { icon: 'fa-check', text: 'ใส่ปูนขาว (CaCO₃) 200-300 กก./ไร่ ผสมคลุกเคล้ากับดิน' },
-                { icon: 'fa-check', text: 'ใส่ปูนโดโลไมต์ สำหรับดินที่ขาดแมกนีเซียม' },
-                { icon: 'fa-check', text: 'ใส่เถ้าไม้ 100-150 กก./ไร่ (ให้ผลช้ากว่าปูน)' },
-                { icon: 'fa-check', text: 'รอ 2-4 สัปดาห์หลังใส่ปูนก่อนปลูกพืช' }
-            ]
-        };
-    } else if (phValue > idealRange.max + 0.5) {
-        return {
-            type: 'ph',
-            severity: 'high',
-            icon: 'fa-flask',
-            color: '#ef4444',
-            title: 'ดินมีความเป็นด่างสูง',
-            description: `pH ${phValue.toFixed(1)} สูงกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
-            effects: [
-                'ธาตุเหล็ก แมงกานีส ทองแดง สังกะสี ไม่ละลาย พืชขาดธาตุอาหาร',
-                'ฟอสฟอรัสถูกตรึงในดิน พืชดูดซึมไม่ได้',
-                'ใบพืชเหลืองซีด เนื่องจากขาดธาตุเหล็ก'
-            ],
-            solutions: [
-                { icon: 'fa-check', text: 'ใส่กำมะถัน 50-100 กก./ไร่ ผสมกับดิน' },
-                { icon: 'fa-check', text: 'ใส่ปุ๋ยคอกหรือปุ๋ยหมัก 2-3 ตัน/ไร่' },
-                { icon: 'fa-check', text: 'ใช้ปุ๋ยแอมโมเนียมซัลเฟต แทนยูเรีย' },
-                { icon: 'fa-check', text: 'ปลูกพืชตระกูลถั่วเพื่อปรับสภาพดิน' }
-            ]
-        };
-    } else if (Math.abs(phValue - ((idealRange.min + idealRange.max) / 2)) > 0.3) {
-        return {
-            type: 'ph',
-            severity: 'low',
-            icon: 'fa-info-circle',
-            color: '#f59e0b',
-            title: 'pH ใกล้ขอบเขตมาตรฐาน',
-            description: `pH ${phValue.toFixed(1)} อยู่ในช่วงที่ยอมรับได้ แต่ควรเฝ้าระวัง`,
-            effects: [],
-            solutions: [
-                { icon: 'fa-check', text: 'ตรวจ pH อย่างสม่ำเสมอทุก 3-6 เดือน' },
-                { icon: 'fa-check', text: 'ใส่ปุ๋ยอินทรีย์เพื่อช่วยรักษา pH' }
+                { icon: 'fa-exclamation', text: 'รดน้ำทันที! เริ่มด้วยน้ำเล็กน้อยก่อน แล้วค่อยๆ เพิ่ม' },
+                { icon: 'fa-tint', text: 'รดน้ำ 2-3 ครั้งต่อวัน จนดินอิ่มน้ำ' },
+                { icon: 'fa-umbrella', text: 'สร้างร่มเงาชั่วคราวเพื่อลดการระเหยน้ำ' }
             ]
         };
     }
-    return null;
-}
-
-function analyzeMoistureProblem(moisture, soilType) {
+    
+    // Normal moisture analysis
     const moistureProblems = {
         'แห้ง': {
-            'ดินร่วน': {
-                severity: 'medium',
-                title: 'ดินแห้งเกินไป',
-                effects: ['พืชขาดน้ำ ใบห่อและเหี่ยว', 'รากพืชไม่สามารถดูดธาตุอาหารได้ดี'],
-                solutions: [
-                    { icon: 'fa-tint', text: 'เพิ่มความถี่ในการรดน้ำเป็นวันละครั้ง' },
-                    { icon: 'fa-tint', text: 'คลุมดินด้วยฟางหรือใบไม้แห้ง' },
-                    { icon: 'fa-tint', text: 'ติดตั้งระบบน้ำหยด' }
-                ]
-            },
-            'ดินเหนียว': {
-                severity: 'high',
-                title: 'ดินเหนียวแห้งแข็ง',
-                effects: ['ดินแตกระแหง รากพืชชอนไชยาก', 'อากาศไม่ถ่ายเท'],
-                solutions: [
-                    { icon: 'fa-tint', text: 'รดน้ำทีละน้อยแต่บ่อยครั้ง' },
-                    { icon: 'fa-tint', text: 'ผสมปุ๋ยคอกหรือแกลบเพื่อปรับโครงสร้างดิน' },
-                    { icon: 'fa-tint', text: 'พรวนดินเมื่อมีความชื้นพอเหมาะ' }
-                ]
-            }
+            severity: 'high',
+            effects: ['พืชขาดน้ำ', 'การเจริญเติบโตหยุดชะงัก'],
+            solutions: [
+                { icon: 'fa-tint', text: 'เพิ่มความถี่การรดน้ำ' },
+                { icon: 'fa-cloud-rain', text: 'ติดตั้งระบบสปริงเกลอร์' }
+            ]
         },
+        'ปกติ': null,
         'ชื้น': {
-            'ดินทราย': {
-                severity: 'medium',
-                title: 'ความชื้นสูงผิดปกติสำหรับดินทราย',
-                effects: ['อาจมีการระบายน้ำไม่ดี', 'เสี่ยงต่อโรคราก'],
-                solutions: [
-                    { icon: 'fa-water', text: 'ตรวจสอบการระบายน้ำ' },
-                    { icon: 'fa-water', text: 'ลดความถี่ในการรดน้ำ' },
-                    { icon: 'fa-water', text: 'ยกแปลงปลูกให้สูงขึ้น' }
-                ]
-            }
+            severity: 'low',
+            effects: ['อาจมีปัญหาโรคราก'],
+            solutions: [
+                { icon: 'fa-wind', text: 'เพิ่มการระบายอากาศ' }
+            ]
         }
     };
     
-    if (moistureProblems[moisture] && moistureProblems[moisture][soilType]) {
-        const problem = moistureProblems[moisture][soilType];
-        return {
-            type: 'moisture',
-            severity: problem.severity,
-            icon: 'fa-tint',
-            color: problem.severity === 'high' ? '#ef4444' : '#f59e0b',
-            title: problem.title,
-            description: `ความชื้น${moisture}ไม่เหมาะสมกับ${soilType}`,
-            effects: problem.effects,
-            solutions: problem.solutions
-        };
-    }
-    return null;
+    const problem = moistureProblems[moisture];
+    if (!problem) return null;
+    
+    return {
+        type: 'moisture',
+        severity: problem.severity,
+        icon: moisture === 'แห้ง' ? 'fa-tint-slash' : 'fa-tint',
+        color: problem.severity === 'high' ? '#ef4444' : '#f59e0b',
+        title: `ความชื้น${moisture}`,
+        description: `ระดับความชื้นไม่เหมาะสมสำหรับ${soilType}`,
+        effects: problem.effects,
+        solutions: problem.solutions
+    };
 }
 
-function analyzeTemperatureProblem(temp, idealRange) {
-    if (temp < idealRange.min - 3) {
-        return {
-            type: 'temperature',
-            severity: 'medium',
-            icon: 'fa-thermometer-empty',
-            color: '#3b82f6',
-            title: 'อุณหภูมิต่ำเกินไป',
-            description: `อุณหภูมิ ${temp}°C ต่ำกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
+// Add soil-specific problems
+function analyzeSoilSpecificProblems(result) {
+    const problems = [];
+    const soilType = result.soilData.name;
+    
+    // Clay soil specific problems
+    if (soilType === 'ดินเหนียว' && result.moistureValue === 'แห้ง') {
+        problems.push({
+            type: 'soil-specific',
+            severity: 'high',
+            icon: 'fa-cube',
+            color: '#7c3aed',
+            title: 'ดินเหนียวแข็งจัด',
+            description: 'ดินเหนียวที่แห้งจะแข็งมาก ยากต่อการไถพรวน',
             effects: [
-                'พืชเจริญเติบโตช้า',
-                'การดูดซึมธาตุอาหารลดลง',
-                'เสี่ยงต่อโรคเชื้อรา'
+                'รากพืชไม่สามารถเจาะทะลุได้',
+                'น้ำซึมผ่านได้ยากเมื่อรดน้ำ'
             ],
             solutions: [
-                { icon: 'fa-check', text: 'คลุมดินด้วยพลาสติกสีดำเพื่อเก็บความร้อน' },
-                { icon: 'fa-check', text: 'สร้างโรงเรือนหรือที่กำบังลม' },
-                { icon: 'fa-check', text: 'เลือกปลูกพืชที่ทนอากาศเย็น' }
+                { icon: 'fa-plus-circle', text: 'ผสมทรายหยาบ 20-30% เพื่อปรับโครงสร้าง' },
+                { icon: 'fa-recycle', text: 'ใส่ปุ๋ยอินทรีย์สูง 5-7 กก./ตร.ม.' }
             ]
-        };
-    } else if (temp > idealRange.max + 3) {
-        return {
-            type: 'temperature',
-            severity: 'medium',
-            icon: 'fa-thermometer-full',
-            color: '#ef4444',
-            title: 'อุณหภูมิสูงเกินไป',
-            description: `อุณหภูมิ ${temp}°C สูงกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
-            effects: [
-                'พืชสูญเสียน้ำมาก',
-                'ใบไหม้และเหี่ยว',
-                'ดอกร่วงก่อนติดผล'
-            ],
-            solutions: [
-                { icon: 'fa-check', text: 'ติดตั้งตาข่ายพรางแสง 50-70%' },
-                { icon: 'fa-check', text: 'เพิ่มความถี่ในการรดน้ำ' },
-                { icon: 'fa-check', text: 'ปลูกพืชคลุมดินหรือพืชให้ร่มเงา' }
-            ]
-        };
+        });
     }
-    return null;
+    
+    // Sandy soil specific problems
+    if (soilType === 'ดินทราย') {
+        problems.push({
+            type: 'soil-specific',
+            severity: 'medium',
+            icon: 'fa-hourglass',
+            color: '#f59e0b',
+            title: 'ดินทรายขาดธาตุอาหาร',
+            description: 'ดินทรายมักขาดธาตุอาหารเนื่องจากการชะล้าง',
+            effects: [
+                'พืชขาดธาตุอาหาร โตช้า',
+                'ต้องใส่ปุ๋ยบ่อย'
+            ],
+            solutions: [
+                { icon: 'fa-leaf', text: 'ใส่ปุ๋ยหมักหรือคอก 4-5 กก./ตร.ม.' },
+                { icon: 'fa-clock', text: 'แบ่งใส่ปุ๋ยเคมีทีละน้อยแต่บ่อยครั้ง' }
+            ]
+        });
+    }
+    
+    return problems;
+}
+
+// Prioritize and deduplicate problems
+function prioritizeProblems(problems) {
+    // Remove duplicates
+    const uniqueProblems = problems.reduce((acc, current) => {
+        const duplicate = acc.find(item => 
+            item.type === current.type && 
+            item.title === current.title
+        );
+        if (!duplicate) {
+            acc.push(current);
+        } else if (current.severity === 'critical' || 
+                   (current.severity === 'high' && duplicate.severity !== 'critical')) {
+            // Replace with higher severity
+            const index = acc.indexOf(duplicate);
+            acc[index] = current;
+        }
+        return acc;
+    }, []);
+    
+    // Sort by severity
+    const severityOrder = { 'critical': 0, 'high': 1, 'medium': 2, 'low': 3 };
+    return uniqueProblems.sort((a, b) => 
+        severityOrder[a.severity] - severityOrder[b.severity]
+    );
 }
         
         // ============================================
@@ -3668,6 +3819,7 @@ function analyzeTemperatureProblem(temp, idealRange) {
 
 // Analyze and display problems
 const problems = analyzeSoilProblems(result);
+
 
 // Create or update problems section
 let problemsSection = document.getElementById('soilProblems');
