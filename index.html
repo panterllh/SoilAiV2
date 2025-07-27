@@ -1814,6 +1814,256 @@
         background: #10b981;
         border-radius: 3px;
     }
+    
+    
+    /* ============================================
+   Soil Problems Analysis Section
+============================================ */
+.soil-problems-section {
+    margin-top: 30px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.no-problems-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.1));
+    padding: 40px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    border: 2px solid var(--success-color);
+    animation: slideInUp 0.5s ease-out;
+}
+
+body.dark-mode .no-problems-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.15));
+}
+
+.problem-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.problem-card.animate-slideInUp {
+    animation: slideInUp 0.5s ease-out forwards;
+}
+
+body.dark-mode .problem-card {
+    background: var(--light-color);
+    border-color: var(--border-color);
+}
+
+.problem-card[data-severity="high"] {
+    border-left: 4px solid var(--danger-color);
+}
+
+.problem-card[data-severity="medium"] {
+    border-left: 4px solid var(--warning-color);
+}
+
+.problem-card[data-severity="low"] {
+    border-left: 4px solid var(--secondary-color);
+}
+
+.problem-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.problem-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.problem-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.problem-card:hover .problem-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.problem-title-section {
+    flex: 1;
+}
+
+.problem-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.problem-description {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.severity-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.severity-high {
+    background: var(--danger-color);
+    color: white;
+}
+
+.severity-medium {
+    background: var(--warning-color);
+    color: white;
+}
+
+.severity-low {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.problem-effects {
+    background: rgba(239, 68, 68, 0.05);
+    padding: 15px 20px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 20px;
+}
+
+body.dark-mode .problem-effects {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.problem-effects h5 {
+    color: var(--danger-color);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.problem-effects ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.problem-effects li {
+    color: var(--text-light);
+    padding: 5px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.problem-effects li i {
+    color: var(--danger-color);
+    flex-shrink: 0;
+    margin-top: 3px;
+    font-size: 0.8rem;
+}
+
+.problem-solutions {
+    background: rgba(16, 185, 129, 0.05);
+    padding: 15px 20px;
+    border-radius: var(--border-radius-sm);
+}
+
+body.dark-mode .problem-solutions {
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.problem-solutions h5 {
+    color: var(--success-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.solutions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.solution-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px;
+    background: white;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+}
+
+body.dark-mode .solution-item {
+    background: var(--dark-color);
+}
+
+.solution-item:hover {
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
+}
+
+.solution-item i {
+    color: var(--success-color);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .problem-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .problem-icon {
+        margin: 0 auto;
+    }
+    
+    .severity-badge {
+        margin-top: 10px;
+    }
+    
+    .problem-effects,
+    .problem-solutions {
+        padding: 12px 15px;
+    }
+}
+
+/* Animation for problem cards */
+@keyframes problemPulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+}
+
+.problem-card[data-severity="high"] {
+    animation: problemPulse 2s ease-in-out infinite;
+}
     </style>
 </head>
     
@@ -3195,6 +3445,192 @@ project-folder/
         }
         
         // ============================================
+// Soil Problem Analysis Functions
+// ============================================
+function analyzeSoilProblems(result) {
+    const problems = [];
+    const { phValue, moistureValue, tempValue, soilData } = result;
+    
+    // Parse pH range
+    const [phMin, phMax] = phValue.split('-').map(Number);
+    const phAvg = (phMin + phMax) / 2;
+    
+    // Parse temperature range
+    const [tempMin, tempMax] = tempValue.split('-').map(Number);
+    const tempAvg = (tempMin + tempMax) / 2;
+    
+    // Analyze pH problems
+    const phProblem = analyzePHProblem(phAvg, soilData.phRange);
+    if (phProblem) problems.push(phProblem);
+    
+    // Analyze moisture problems
+    const moistureProblem = analyzeMoistureProblem(moistureValue, soilData.name);
+    if (moistureProblem) problems.push(moistureProblem);
+    
+    // Analyze temperature problems
+    const tempProblem = analyzeTemperatureProblem(tempAvg, soilData.tempRange);
+    if (tempProblem) problems.push(tempProblem);
+    
+    return problems;
+}
+
+function analyzePHProblem(phValue, idealRange) {
+    if (phValue < idealRange.min - 0.5) {
+        return {
+            type: 'ph',
+            severity: 'high',
+            icon: 'fa-flask',
+            color: '#ef4444',
+            title: 'ดินมีความเป็นกรดสูง',
+            description: `pH ${phValue.toFixed(1)} ต่ำกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
+            effects: [
+                'ธาตุอาหารบางชนิดละลายน้ำได้ยาก พืชดูดซึมไม่ได้',
+                'อลูมิเนียมและแมงกานีสละลายมากเกินไป เป็นพิษต่อพืช',
+                'จุลินทรีย์ที่เป็นประโยชน์ทำงานได้ไม่ดี'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ใส่ปูนขาว (CaCO₃) 200-300 กก./ไร่ ผสมคลุกเคล้ากับดิน' },
+                { icon: 'fa-check', text: 'ใส่ปูนโดโลไมต์ สำหรับดินที่ขาดแมกนีเซียม' },
+                { icon: 'fa-check', text: 'ใส่เถ้าไม้ 100-150 กก./ไร่ (ให้ผลช้ากว่าปูน)' },
+                { icon: 'fa-check', text: 'รอ 2-4 สัปดาห์หลังใส่ปูนก่อนปลูกพืช' }
+            ]
+        };
+    } else if (phValue > idealRange.max + 0.5) {
+        return {
+            type: 'ph',
+            severity: 'high',
+            icon: 'fa-flask',
+            color: '#ef4444',
+            title: 'ดินมีความเป็นด่างสูง',
+            description: `pH ${phValue.toFixed(1)} สูงกว่าค่ามาตรฐาน (${idealRange.min}-${idealRange.max})`,
+            effects: [
+                'ธาตุเหล็ก แมงกานีส ทองแดง สังกะสี ไม่ละลาย พืชขาดธาตุอาหาร',
+                'ฟอสฟอรัสถูกตรึงในดิน พืชดูดซึมไม่ได้',
+                'ใบพืชเหลืองซีด เนื่องจากขาดธาตุเหล็ก'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ใส่กำมะถัน 50-100 กก./ไร่ ผสมกับดิน' },
+                { icon: 'fa-check', text: 'ใส่ปุ๋ยคอกหรือปุ๋ยหมัก 2-3 ตัน/ไร่' },
+                { icon: 'fa-check', text: 'ใช้ปุ๋ยแอมโมเนียมซัลเฟต แทนยูเรีย' },
+                { icon: 'fa-check', text: 'ปลูกพืชตระกูลถั่วเพื่อปรับสภาพดิน' }
+            ]
+        };
+    } else if (Math.abs(phValue - ((idealRange.min + idealRange.max) / 2)) > 0.3) {
+        return {
+            type: 'ph',
+            severity: 'low',
+            icon: 'fa-info-circle',
+            color: '#f59e0b',
+            title: 'pH ใกล้ขอบเขตมาตรฐาน',
+            description: `pH ${phValue.toFixed(1)} อยู่ในช่วงที่ยอมรับได้ แต่ควรเฝ้าระวัง`,
+            effects: [],
+            solutions: [
+                { icon: 'fa-check', text: 'ตรวจ pH อย่างสม่ำเสมอทุก 3-6 เดือน' },
+                { icon: 'fa-check', text: 'ใส่ปุ๋ยอินทรีย์เพื่อช่วยรักษา pH' }
+            ]
+        };
+    }
+    return null;
+}
+
+function analyzeMoistureProblem(moisture, soilType) {
+    const moistureProblems = {
+        'แห้ง': {
+            'ดินร่วน': {
+                severity: 'medium',
+                title: 'ดินแห้งเกินไป',
+                effects: ['พืชขาดน้ำ ใบห่อและเหี่ยว', 'รากพืชไม่สามารถดูดธาตุอาหารได้ดี'],
+                solutions: [
+                    { icon: 'fa-tint', text: 'เพิ่มความถี่ในการรดน้ำเป็นวันละครั้ง' },
+                    { icon: 'fa-tint', text: 'คลุมดินด้วยฟางหรือใบไม้แห้ง' },
+                    { icon: 'fa-tint', text: 'ติดตั้งระบบน้ำหยด' }
+                ]
+            },
+            'ดินเหนียว': {
+                severity: 'high',
+                title: 'ดินเหนียวแห้งแข็ง',
+                effects: ['ดินแตกระแหง รากพืชชอนไชยาก', 'อากาศไม่ถ่ายเท'],
+                solutions: [
+                    { icon: 'fa-tint', text: 'รดน้ำทีละน้อยแต่บ่อยครั้ง' },
+                    { icon: 'fa-tint', text: 'ผสมปุ๋ยคอกหรือแกลบเพื่อปรับโครงสร้างดิน' },
+                    { icon: 'fa-tint', text: 'พรวนดินเมื่อมีความชื้นพอเหมาะ' }
+                ]
+            }
+        },
+        'ชื้น': {
+            'ดินทราย': {
+                severity: 'medium',
+                title: 'ความชื้นสูงผิดปกติสำหรับดินทราย',
+                effects: ['อาจมีการระบายน้ำไม่ดี', 'เสี่ยงต่อโรคราก'],
+                solutions: [
+                    { icon: 'fa-water', text: 'ตรวจสอบการระบายน้ำ' },
+                    { icon: 'fa-water', text: 'ลดความถี่ในการรดน้ำ' },
+                    { icon: 'fa-water', text: 'ยกแปลงปลูกให้สูงขึ้น' }
+                ]
+            }
+        }
+    };
+    
+    if (moistureProblems[moisture] && moistureProblems[moisture][soilType]) {
+        const problem = moistureProblems[moisture][soilType];
+        return {
+            type: 'moisture',
+            severity: problem.severity,
+            icon: 'fa-tint',
+            color: problem.severity === 'high' ? '#ef4444' : '#f59e0b',
+            title: problem.title,
+            description: `ความชื้น${moisture}ไม่เหมาะสมกับ${soilType}`,
+            effects: problem.effects,
+            solutions: problem.solutions
+        };
+    }
+    return null;
+}
+
+function analyzeTemperatureProblem(temp, idealRange) {
+    if (temp < idealRange.min - 3) {
+        return {
+            type: 'temperature',
+            severity: 'medium',
+            icon: 'fa-thermometer-empty',
+            color: '#3b82f6',
+            title: 'อุณหภูมิต่ำเกินไป',
+            description: `อุณหภูมิ ${temp}°C ต่ำกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
+            effects: [
+                'พืชเจริญเติบโตช้า',
+                'การดูดซึมธาตุอาหารลดลง',
+                'เสี่ยงต่อโรคเชื้อรา'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'คลุมดินด้วยพลาสติกสีดำเพื่อเก็บความร้อน' },
+                { icon: 'fa-check', text: 'สร้างโรงเรือนหรือที่กำบังลม' },
+                { icon: 'fa-check', text: 'เลือกปลูกพืชที่ทนอากาศเย็น' }
+            ]
+        };
+    } else if (temp > idealRange.max + 3) {
+        return {
+            type: 'temperature',
+            severity: 'medium',
+            icon: 'fa-thermometer-full',
+            color: '#ef4444',
+            title: 'อุณหภูมิสูงเกินไป',
+            description: `อุณหภูมิ ${temp}°C สูงกว่าที่เหมาะสม (${idealRange.min}-${idealRange.max}°C)`,
+            effects: [
+                'พืชสูญเสียน้ำมาก',
+                'ใบไหม้และเหี่ยว',
+                'ดอกร่วงก่อนติดผล'
+            ],
+            solutions: [
+                { icon: 'fa-check', text: 'ติดตั้งตาข่ายพรางแสง 50-70%' },
+                { icon: 'fa-check', text: 'เพิ่มความถี่ในการรดน้ำ' },
+                { icon: 'fa-check', text: 'ปลูกพืชคลุมดินหรือพืชให้ร่มเงา' }
+            ]
+        };
+    }
+    return null;
+}
+        
+        // ============================================
         // Display Results
         // ============================================
         function displayResults(result) {
@@ -3226,6 +3662,105 @@ project-folder/
             document.getElementById('moistureValue').textContent = result.moistureValue;
             document.getElementById('tempValue').textContent = result.tempValue;
             
+            // ในฟังก์ชัน displayResults หลังจากแสดง soil properties
+// ประมาณบรรทัดที่ 2400 หลังจาก:
+// document.getElementById('tempValue').textContent = result.tempValue;
+
+// Analyze and display problems
+const problems = analyzeSoilProblems(result);
+
+// Create or update problems section
+let problemsSection = document.getElementById('soilProblems');
+if (!problemsSection) {
+    // Create problems section if it doesn't exist
+    const problemsHTML = `
+        <div class="soil-problems-section" id="soilProblems" style="margin-top: 30px;">
+            <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--text-color);">
+                <i class="fas fa-exclamation-triangle"></i> การวิเคราะห์ปัญหาของดิน
+            </h3>
+            <div id="problemsList"></div>
+        </div>
+    `;
+    
+    // Insert after soil-result div
+    const soilResult = document.querySelector('.soil-result');
+    soilResult.insertAdjacentHTML('afterend', problemsHTML);
+}
+
+// Update problems list
+const problemsList = document.getElementById('problemsList');
+problemsList.innerHTML = '';
+
+if (problems.length === 0) {
+    // No problems found
+    problemsList.innerHTML = `
+        <div class="no-problems-card">
+            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
+            <h4 style="color: var(--success-color); margin-bottom: 10px;">สภาพดินอยู่ในเกณฑ์ดี</h4>
+            <p style="color: var(--text-light);">ค่า pH ความชื้น และอุณหภูมิอยู่ในช่วงที่เหมาะสมสำหรับการเพาะปลูก</p>
+        </div>
+    `;
+} else {
+    // Display problems
+    problems.forEach((problem, index) => {
+        const problemCard = createProblemCard(problem);
+        problemsList.appendChild(problemCard);
+        
+        // Add animation delay
+        setTimeout(() => {
+            problemCard.classList.add('animate-slideInUp');
+        }, index * 150);
+    });
+}
+
+// Helper function to create problem card
+function createProblemCard(problem) {
+    const card = document.createElement('div');
+    card.className = 'problem-card';
+    card.setAttribute('data-severity', problem.severity);
+    
+    const effectsList = problem.effects.map(effect => 
+        `<li><i class="fas fa-angle-right"></i> ${effect}</li>`
+    ).join('');
+    
+    const solutionsList = problem.solutions.map(solution => 
+        `<div class="solution-item">
+            <i class="fas ${solution.icon}"></i>
+            <span>${solution.text}</span>
+        </div>`
+    ).join('');
+    
+    card.innerHTML = `
+        <div class="problem-header">
+            <div class="problem-icon" style="background-color: ${problem.color}20; color: ${problem.color};">
+                <i class="fas ${problem.icon}"></i>
+            </div>
+            <div class="problem-title-section">
+                <h4 class="problem-title">${problem.title}</h4>
+                <p class="problem-description">${problem.description}</p>
+            </div>
+            <div class="severity-badge severity-${problem.severity}">
+                ${problem.severity === 'high' ? 'สำคัญ' : problem.severity === 'medium' ? 'ปานกลาง' : 'เฝ้าระวัง'}
+            </div>
+        </div>
+        
+        ${problem.effects.length > 0 ? `
+            <div class="problem-effects">
+                <h5><i class="fas fa-exclamation-circle"></i> ผลกระทบที่อาจเกิดขึ้น</h5>
+                <ul>${effectsList}</ul>
+            </div>
+        ` : ''}
+        
+        <div class="problem-solutions">
+            <h5><i class="fas fa-tools"></i> วิธีแก้ไข</h5>
+            <div class="solutions-list">
+                ${solutionsList}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
             // Update recommendations with animation
             const recList = document.getElementById('recommendationsList');
             recList.innerHTML = '';
