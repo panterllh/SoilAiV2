@@ -2082,6 +2082,18 @@ body.dark-mode .solution-item {
     50% { opacity: 0.9; transform: scale(1.05); }
 }
 
+/* เพิ่มใน style section */
+.severity-critical {
+    background: #7c2d12;
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.problem-card[data-severity="critical"] {
+    border-left: 4px solid #7c2d12;
+    animation: problemPulse 1s ease-in-out infinite;
+}
+
     </style>
 </head>
     
@@ -3980,53 +3992,53 @@ function prioritizeProblems(problems) {
 
 // Analyze and display problems
 const previewImage = document.getElementById('previewImage');
-const problems = await analyzeSoilProblems(result, previewImage);
-
-
-// Create or update problems section
-let problemsSection = document.getElementById('soilProblems');
-if (!problemsSection) {
-    // Create problems section if it doesn't exist
-    const problemsHTML = `
-        <div class="soil-problems-section" id="soilProblems" style="margin-top: 30px;">
-            <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--text-color);">
-                <i class="fas fa-exclamation-triangle"></i> การวิเคราะห์ปัญหาของดิน
-            </h3>
-            <div id="problemsList"></div>
-        </div>
-    `;
-    
-    // Insert after soil-result div
-    const soilResult = document.querySelector('.soil-result');
-    soilResult.insertAdjacentHTML('afterend', problemsHTML);
-}
-
-// Update problems list
-const problemsList = document.getElementById('problemsList');
-problemsList.innerHTML = '';
-
-if (problems.length === 0) {
-    // No problems found
-    problemsList.innerHTML = `
-        <div class="no-problems-card">
-            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
-            <h4 style="color: var(--success-color); margin-bottom: 10px;">สภาพดินอยู่ในเกณฑ์ดี</h4>
-            <p style="color: var(--text-light);">ค่า pH ความชื้น และอุณหภูมิอยู่ในช่วงที่เหมาะสมสำหรับการเพาะปลูก</p>
-        </div>
-    `;
-} else {
-    // Display problems
-    problems.forEach((problem, index) => {
-        const problemCard = createProblemCard(problem);
-        problemsList.appendChild(problemCard);
+    analyzeSoilProblems(result, previewImage).then(problems => {
+        // Create or update problems section
+        let problemsSection = document.getElementById('soilProblems');
+        if (!problemsSection) {
+            // Create problems section if it doesn't exist
+            const problemsHTML = `
+                <div class="soil-problems-section" id="soilProblems" style="margin-top: 30px;">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--text-color);">
+                        <i class="fas fa-exclamation-triangle"></i> การวิเคราะห์ปัญหาของดิน
+                    </h3>
+                    <div id="problemsList"></div>
+                </div>
+            `;
+            
+            // Insert after soil-result div
+            const soilResult = document.querySelector('.soil-result');
+            soilResult.insertAdjacentHTML('afterend', problemsHTML);
+        }
         
-        // Add animation delay
-        setTimeout(() => {
-            problemCard.classList.add('animate-slideInUp');
-        }, index * 150);
+        // Update problems list
+        const problemsList = document.getElementById('problemsList');
+        problemsList.innerHTML = '';
+        
+        if (problems.length === 0) {
+            // No problems found
+            problemsList.innerHTML = `
+                <div class="no-problems-card">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success-color); margin-bottom: 15px;"></i>
+                    <h4 style="color: var(--success-color); margin-bottom: 10px;">สภาพดินอยู่ในเกณฑ์ดี</h4>
+                    <p style="color: var(--text-light);">ค่า pH ความชื้น และอุณหภูมิอยู่ในช่วงที่เหมาะสมสำหรับการเพาะปลูก</p>
+                </div>
+            `;
+        } else {
+            // Display problems
+            problems.forEach((problem, index) => {
+                const problemCard = createProblemCard(problem);
+                problemsList.appendChild(problemCard);
+                
+                // Add animation delay
+                setTimeout(() => {
+                    problemCard.classList.add('animate-slideInUp');
+                }, index * 150);
+            });
+        }
     });
-}
 
+// Helper function to create problem card
 // Helper function to create problem card
 function createProblemCard(problem) {
     const card = document.createElement('div');
@@ -4044,6 +4056,13 @@ function createProblemCard(problem) {
         </div>`
     ).join('');
     
+    const severityText = {
+        'critical': 'วิกฤต',
+        'high': 'สำคัญ',
+        'medium': 'ปานกลาง',
+        'low': 'เฝ้าระวัง'
+    };
+    
     card.innerHTML = `
         <div class="problem-header">
             <div class="problem-icon" style="background-color: ${problem.color}20; color: ${problem.color};">
@@ -4054,7 +4073,7 @@ function createProblemCard(problem) {
                 <p class="problem-description">${problem.description}</p>
             </div>
             <div class="severity-badge severity-${problem.severity}">
-                ${problem.severity === 'high' ? 'สำคัญ' : problem.severity === 'medium' ? 'ปานกลาง' : 'เฝ้าระวัง'}
+                ${severityText[problem.severity] || problem.severity}
             </div>
         </div>
         
