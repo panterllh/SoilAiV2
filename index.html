@@ -3713,111 +3713,89 @@ function createProblemCard(problem) {
 
 // New function to analyze visual problems from image
 // Improved visual problem analysis
+// Enhanced visual problem detection
 async function analyzeVisualProblems(imgElement, result) {
     const problems = [];
-    
-    // Get color analysis from the image
-    const colorAnalysis = await analyzeImageColors(imgElement);
-    const { brightness, saturation, brownScore, grayScore } = colorAnalysis.characteristics;
     
     // Get enhanced texture analysis
     const textureAnalysis = await analyzeTexture(imgElement);
     
-    console.log('Visual Analysis Results:', {
-        textureType: textureAnalysis.textureType,
-        crackingScore: textureAnalysis.crackingScore,
-        soilType: result.soilData.name,
-        moisture: result.moistureValue
+    console.log('Visual Problem Detection:', {
+        texture: textureAnalysis.textureType,
+        confidence: textureAnalysis.confidence,
+        crackingScore: textureAnalysis.crackingScore
     });
     
-    // Check for soil cracking - ใช้เกณฑ์ที่เข้มงวดขึ้น
-    if (textureAnalysis.textureType === 'cracked' && 
-        textureAnalysis.crackingScore > 0.5 && // เพิ่ม threshold
-        textureAnalysis.brownRatio < 0.3 && // ดินที่อุดมสมบูรณ์จะมีสีน้ำตาล
-        textureAnalysis.greenRatio < 0.1) { // ไม่มีพืชหรือความชื้น
+    // Detect severe cracking with high confidence
+    if ((textureAnalysis.textureType === 'severely_cracked' || 
+         textureAnalysis.textureType === 'cracked') &&
+        textureAnalysis.crackingScore > 0.35) {
         
-        // ตรวจสอบเพิ่มเติมจากข้อมูลดิน
-        const isSandySoil = result.soilData.name === 'ดินทราย';
-        const isClayDry = result.soilData.name === 'ดินเหนียว' && result.moistureValue === 'แห้ง';
-        
-        if (isSandySoil || isClayDry || textureAnalysis.crackingScore > 0.7) {
-            problems.push({
-                type: 'visual',
-                visualIndicator: 'cracking',
-                severity: textureAnalysis.crackingScore > 0.7 ? 'critical' : 'high',
-                icon: 'fa-bolt',
-                color: '#dc2626',
-                title: 'ดินแตกระแหงรุนแรง',
-                description: 'พบรอยแตกบนผิวดินจำนวนมาก แสดงถึงการขาดน้ำอย่างรุนแรง',
-                effects: [
-                    'รากพืชไม่สามารถชอนไชและเจริญเติบโตได้',
-                    'การระบายอากาศในดินไม่ดี',
-                    'สูญเสียความชื้นอย่างรวดเร็วเมื่อมีฝน',
-                    'จุลินทรีย์ในดินตายหรือหยุดทำงาน'
-                ],
-                solutions: [
-                    { icon: 'fa-tint', text: 'รดน้ำทันที แต่ค่อยๆ เพิ่มปริมาณ เริ่มจาก 5-10 ลิตร/ตร.ม.' },
-                    { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 5-10 ซม. เพื่อรักษาความชื้น' },
-                    { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอกหรือปุ๋ยหมัก 3-5 กก./ตร.ม. เพื่อปรับปรุงโครงสร้าง' },
-                    { icon: 'fa-tools', text: 'พรวนดินเบาๆ เมื่อดินมีความชื้นพอเหมาะ' }
-                ]
-            });
-        }
-    }
-    
-    // Check for healthy moist soil
-    if (textureAnalysis.textureType === 'moist' || 
-        textureAnalysis.greenRatio > 0.15 ||
-        (textureAnalysis.brownRatio > 0.4 && brightness < 0.6)) {
-        // ดินมีความชื้นดี ไม่ต้องแสดงปัญหา
-        console.log('Soil appears healthy and moist');
-    }
-    
-    // Check for waterlogging - ปรับเกณฑ์ให้แม่นยำขึ้น
-    if ((textureAnalysis.textureType === 'moist' && brightness < 0.3) ||
-        (grayScore > 0.8 && textureAnalysis.greenRatio < 0.05) ||
-        (colorAnalysis.average.b > colorAnalysis.average.r * 1.2 && brightness < 0.4)) {
+        const severity = textureAnalysis.crackingScore > 0.6 ? 'critical' : 
+                        textureAnalysis.crackingScore > 0.45 ? 'high' : 'medium';
         
         problems.push({
             type: 'visual',
-            visualIndicator: 'waterlogging',
-            severity: 'high',
-            icon: 'fa-water',
-            color: '#3b82f6',
-            title: 'ดินมีน้ำท่วมขังหรือชื้นเกินไป',
-            description: 'สีดินบ่งบอกถึงการขังน้ำหรือการระบายน้ำไม่ดี',
-            effects: [
-                'รากพืชขาดออกซิเจน อาจเน่าตาย',
-                'เกิดโรคเชื้อราได้ง่าย',
-                'ธาตุอาหารถูกชะล้าง'
+            visualIndicator: 'cracking',
+            severity: severity,
+            icon: 'fa-bolt',
+            color: severity === 'critical' ? '#7c2d12' : '#dc2626',
+            title: severity === 'critical' ? 'ดินแตกระแหงวิกฤติ!' : 'ดินแตกระแหงรุนแรง',
+            description: `พบรอยแตกบนผิวดิน${textureAnalysis.connectedCracks > 10 ? 'เป็นร่างแหมากจำนวนมาก' : 'อย่างชัดเจน'} แสดงถึงการขาดน้ำ${severity === 'critical' ? 'อย่างวิกฤติ' : 'อย่างรุนแรง'}`,
+            effects: severity === 'critical' ? [
+                'ดินแข็งมาก รากพืชไม่สามารถชอนไชได้เลย',
+                'สูญเสียความอุดมสมบูรณ์ของดินอย่างรุนแรง',
+                'จุลินทรีย์ที่เป็นประโยชน์ตายหมด',
+                'ต้องใช้เวลานานในการฟื้นฟู',
+                'พืชที่ปลูกอยู่มีโอกาสตายสูง'
+            ] : [
+                'รากพืชไม่สามารถชอนไชและเจริญเติบโตได้',
+                'การระบายอากาศในดินไม่ดี',
+                'สูญเสียความชื้นอย่างรวดเร็วเมื่อมีฝน',
+                'จุลินทรีย์ในดินทำงานได้ไม่ดี'
             ],
-            solutions: [
-                { icon: 'fa-arrow-up', text: 'ยกแปลงปลูกสูง 20-30 ซม.' },
-                { icon: 'fa-route', text: 'ขุดร่องระบายน้ำรอบแปลง' },
-                { icon: 'fa-ban', text: 'หยุดรดน้ำชั่วคราวจนดินแห้ง' }
+            solutions: severity === 'critical' ? [
+                { icon: 'fa-exclamation-triangle', text: 'ต้องดำเนินการฟื้นฟูดินโดยด่วน!' },
+                { icon: 'fa-tint', text: 'รดน้ำทันที เริ่มจาก 5 ลิตร/ตร.ม. เพิ่มทีละน้อยทุก 2-3 ชั่วโมง' },
+                { icon: 'fa-umbrella', text: 'สร้างร่มเงาชั่วคราวด้วยตาข่ายพรางแสง 70%' },
+                { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 10-15 ซม. ทันที' },
+                { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอก 5-7 กก./ตร.ม. + ปุ๋ยหมัก' },
+                { icon: 'fa-clock', text: 'ติดตั้งระบบน้ำหยดเพื่อให้น้ำสม่ำเสมอ' },
+                { icon: 'fa-ban', text: 'งดปลูกพืชใหม่จนกว่าดินจะฟื้นตัว (2-4 สัปดาห์)' }
+            ] : [
+                { icon: 'fa-tint', text: 'รดน้ำทันที แต่ค่อยๆ เพิ่มปริมาณ เริ่มจาก 5-10 ลิตร/ตร.ม.' },
+                { icon: 'fa-layer-group', text: 'คลุมดินด้วยฟางหนา 5-10 ซม. เพื่อรักษาความชื้น' },
+                { icon: 'fa-seedling', text: 'ผสมปุ๋ยคอกหรือปุ๋ยหมัก 3-5 กก./ตร.ม.' },
+                { icon: 'fa-tools', text: 'พรวนดินเบาๆ เมื่อดินมีความชื้นพอเหมาะ' }
             ]
         });
     }
     
-    // Check for erosion - เฉพาะเมื่อมีหลักฐานชัดเจน
-    if (textureAnalysis.roughnessScore > 0.7 && 
-        brightness > 0.7 &&
-        textureAnalysis.brownRatio < 0.2) {
+    // Check for healthy soil indicators
+    else if (textureAnalysis.textureType === 'healthy_loam' ||
+             (textureAnalysis.greenRatio > 0.1 && textureAnalysis.brownRatio > 0.3)) {
+        // Healthy soil - no problems
+        console.log('Soil appears healthy with good moisture and organic content');
+    }
+    
+    // Check for dry but not cracked soil
+    else if (textureAnalysis.textureType === 'dry_sandy' && 
+             textureAnalysis.dryColorRatio > 0.6) {
         problems.push({
             type: 'visual',
-            visualIndicator: 'erosion',
-            severity: 'medium',
-            icon: 'fa-mountain',
+            visualIndicator: 'dry_surface',
+            severity: 'low',
+            icon: 'fa-sun',
             color: '#f59e0b',
-            title: 'มีการกัดเซาะหน้าดิน',
-            description: 'พื้นผิวขรุขระ อาจมีการพังทลายของหน้าดิน',
+            title: 'ผิวดินแห้ง',
+            description: 'ดินมีความแห้งแต่ยังไม่ถึงขั้นแตกระแหง',
             effects: [
-                'สูญเสียดินชั้นบนที่อุดมสมบูรณ์',
-                'ธาตุอาหารถูกชะล้าง'
+                'พืชอาจขาดน้ำในระยะยาว',
+                'ธาตุอาหารละลายได้ยาก'
             ],
             solutions: [
-                { icon: 'fa-tree', text: 'ปลูกพืชคลุมดินหรือหญ้าแฝก' },
-                { icon: 'fa-layer-group', text: 'ทำขั้นบันไดดินในพื้นที่ลาดชัน' }
+                { icon: 'fa-tint', text: 'เพิ่มความถี่ในการรดน้ำ' },
+                { icon: 'fa-leaf', text: 'คลุมดินเพื่อลดการระเหยน้ำ' }
             ]
         });
     }
@@ -3827,13 +3805,14 @@ async function analyzeVisualProblems(imgElement, result) {
 
 // New texture analysis function
 // Enhanced texture analysis function with better accuracy
+// Advanced texture analysis with crack pattern detection
 async function analyzeTexture(imgElement) {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Resize for performance
-        const size = 300; // เพิ่มขนาดเพื่อความแม่นยำ
+        // Use larger size for better crack detection
+        const size = 400;
         canvas.width = size;
         canvas.height = size;
         ctx.drawImage(imgElement, 0, 0, size, size);
@@ -3841,146 +3820,227 @@ async function analyzeTexture(imgElement) {
         const imageData = ctx.getImageData(0, 0, size, size);
         const data = imageData.data;
         
-        // Enhanced analysis variables
-        let contrastSum = 0;
-        let edgeCount = 0;
-        let darkPixels = 0;
+        // Analysis variables
+        let darkLines = 0;
+        let crackPixels = 0;
+        let polygonPatterns = 0;
+        let contrastTransitions = 0;
         let brownPixels = 0;
         let greenPixels = 0;
-        let grayPixels = 0;
-        let verticalLines = 0;
-        let horizontalLines = 0;
-        let diagonalLines = 0;
+        let dryColorPixels = 0;
         
-        // Color and pattern analysis
-        for (let y = 1; y < size - 1; y++) {
-            for (let x = 1; x < size - 1; x++) {
+        // Crack pattern detection grid
+        const gridSize = 10;
+        const gridCells = size / gridSize;
+        const crackGrid = Array(gridCells).fill(0).map(() => Array(gridCells).fill(0));
+        
+        // First pass: Color and basic analysis
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
                 const idx = (y * size + x) * 4;
                 const r = data[idx];
                 const g = data[idx + 1];
                 const b = data[idx + 2];
                 const brightness = (r + g + b) / 3;
                 
-                // Count color types
-                if (brightness < 80) darkPixels++;
-                
-                // Detect brown soil (healthy soil color)
-                if (r > g && g > b && r - b > 30 && r < 150) {
-                    brownPixels++;
+                // Detect dry earth colors (beige, light brown, gray-brown)
+                if (r > g && g >= b && 
+                    brightness > 100 && brightness < 200 &&
+                    r - b > 20 && r - b < 80) {
+                    dryColorPixels++;
                 }
                 
-                // Detect green (plants/moss - indicates moisture)
-                if (g > r && g > b && g - Math.max(r, b) > 20) {
+                // Detect green (vegetation = moisture)
+                if (g > r + 10 && g > b + 10) {
                     greenPixels++;
                 }
                 
-                // Detect gray (could be dry but not necessarily cracked)
-                if (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && Math.abs(r - b) < 15) {
-                    grayPixels++;
+                // Detect rich brown (healthy soil)
+                if (r > g && g > b && 
+                    r < 120 && g < 100 && b < 80 &&
+                    r - b > 30) {
+                    brownPixels++;
+                }
+            }
+        }
+        
+        // Second pass: Crack detection
+        for (let y = 2; y < size - 2; y++) {
+            for (let x = 2; x < size - 2; x++) {
+                const idx = (y * size + x) * 4;
+                const centerBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                
+                // Get 3x3 neighborhood
+                let neighborSum = 0;
+                let neighborCount = 0;
+                let darkNeighbors = 0;
+                
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        if (dx === 0 && dy === 0) continue;
+                        
+                        const nIdx = ((y + dy) * size + (x + dx)) * 4;
+                        const nBrightness = (data[nIdx] + data[nIdx + 1] + data[nIdx + 2]) / 3;
+                        neighborSum += nBrightness;
+                        neighborCount++;
+                        
+                        if (nBrightness < centerBrightness - 30) {
+                            darkNeighbors++;
+                        }
+                    }
                 }
                 
-                // Enhanced edge detection for crack patterns
-                if (x < size - 2 && y < size - 2) {
-                    // Get surrounding pixels
-                    const neighbors = [
-                        data[idx - 4], // left
-                        data[idx + 4], // right
-                        data[idx - size * 4], // top
-                        data[idx + size * 4], // bottom
-                        data[idx - size * 4 - 4], // top-left
-                        data[idx - size * 4 + 4], // top-right
-                        data[idx + size * 4 - 4], // bottom-left
-                        data[idx + size * 4 + 4]  // bottom-right
-                    ];
+                const avgNeighborBrightness = neighborSum / neighborCount;
+                
+                // Detect crack pixels (dark lines in bright surroundings)
+                if (centerBrightness < 80 && avgNeighborBrightness > 120) {
+                    crackPixels++;
+                    darkLines++;
                     
-                    // Calculate local contrast
-                    let localContrast = 0;
-                    neighbors.forEach(neighbor => {
-                        localContrast += Math.abs(brightness - neighbor);
-                    });
-                    
-                    // Detect crack patterns (dark lines in bright background)
-                    if (localContrast > 400 && brightness < 100) {
-                        edgeCount++;
-                        
-                        // Check line direction for crack pattern
-                        const horizontal = Math.abs(data[idx - 4] - data[idx + 4]);
-                        const vertical = Math.abs(data[idx - size * 4] - data[idx + size * 4]);
-                        const diagonal1 = Math.abs(data[idx - size * 4 - 4] - data[idx + size * 4 + 4]);
-                        const diagonal2 = Math.abs(data[idx - size * 4 + 4] - data[idx + size * 4 - 4]);
-                        
-                        if (horizontal > 50) horizontalLines++;
-                        if (vertical > 50) verticalLines++;
-                        if (diagonal1 > 50 || diagonal2 > 50) diagonalLines++;
+                    // Mark in grid
+                    const gx = Math.floor(x / gridSize);
+                    const gy = Math.floor(y / gridSize);
+                    if (gx < gridCells && gy < gridCells) {
+                        crackGrid[gy][gx] = 1;
                     }
-                    
-                    contrastSum += localContrast;
+                }
+                
+                // Detect contrast transitions (crack edges)
+                if (Math.abs(centerBrightness - avgNeighborBrightness) > 40) {
+                    contrastTransitions++;
+                }
+                
+                // Detect polygon patterns (typical of dried mud)
+                if (darkNeighbors >= 2 && darkNeighbors <= 4 &&
+                    centerBrightness > avgNeighborBrightness + 20) {
+                    polygonPatterns++;
+                }
+            }
+        }
+        
+        // Third pass: Analyze crack connectivity
+        let connectedCracks = 0;
+        const visited = Array(gridCells).fill(0).map(() => Array(gridCells).fill(false));
+        
+        // DFS to find connected crack regions
+        function dfs(x, y) {
+            if (x < 0 || x >= gridCells || y < 0 || y >= gridCells || 
+                visited[y][x] || crackGrid[y][x] === 0) {
+                return 0;
+            }
+            
+            visited[y][x] = true;
+            let size = 1;
+            
+            // Check 8 directions
+            const dirs = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+            for (const [dx, dy] of dirs) {
+                size += dfs(x + dx, y + dy);
+            }
+            
+            return size;
+        }
+        
+        // Count connected crack regions
+        for (let y = 0; y < gridCells; y++) {
+            for (let x = 0; x < gridCells; x++) {
+                if (!visited[y][x] && crackGrid[y][x] === 1) {
+                    const regionSize = dfs(x, y);
+                    if (regionSize > 3) { // Significant crack region
+                        connectedCracks++;
+                    }
                 }
             }
         }
         
         const totalPixels = size * size;
         
-        // Calculate ratios
-        const brownRatio = brownPixels / totalPixels;
+        // Calculate various ratios
+        const crackPixelRatio = crackPixels / totalPixels;
+        const polygonRatio = polygonPatterns / totalPixels;
+        const contrastRatio = contrastTransitions / totalPixels;
         const greenRatio = greenPixels / totalPixels;
-        const grayRatio = grayPixels / totalPixels;
-        const darkRatio = darkPixels / totalPixels;
+        const brownRatio = brownPixels / totalPixels;
+        const dryColorRatio = dryColorPixels / totalPixels;
         
-        // Calculate crack pattern score with multiple factors
+        // Calculate final cracking score with multiple factors
         let crackingScore = 0;
         
-        // Factor 1: Line patterns (cracks have interconnected lines)
-        const linePatternScore = (verticalLines + horizontalLines + diagonalLines) / (totalPixels * 0.05);
+        // Factor 1: Direct crack pixel detection
+        const directCrackScore = Math.min(crackPixelRatio * 20, 1);
         
-        // Factor 2: High contrast with specific pattern
-        const contrastScore = contrastSum / (totalPixels * 255 * 8);
+        // Factor 2: Polygon patterns (mud cracks form polygons)
+        const polygonScore = Math.min(polygonRatio * 30, 1);
         
-        // Factor 3: Color indicates dryness (not brown, not green)
-        const drynessColorScore = 1 - (brownRatio + greenRatio);
+        // Factor 3: Connected crack regions
+        const connectivityScore = Math.min(connectedCracks / 20, 1);
         
-        // Factor 4: Dark lines in bright background pattern
-        const crackPatternScore = (edgeCount / totalPixels) * (1 - darkRatio);
+        // Factor 4: Dry earth color dominance
+        const dryColorScore = dryColorRatio;
         
-        // Combine factors with weights
-        if (linePatternScore > 0.1 && contrastScore > 0.3 && drynessColorScore > 0.7) {
-            crackingScore = (
-                linePatternScore * 0.3 +
-                contrastScore * 0.3 +
-                drynessColorScore * 0.2 +
-                crackPatternScore * 0.2
-            );
-        }
+        // Factor 5: Absence of vegetation
+        const noVegetationScore = 1 - greenRatio;
         
-        // Detect texture type
+        // Combine all factors
+        crackingScore = (
+            directCrackScore * 0.25 +
+            polygonScore * 0.25 +
+            connectivityScore * 0.2 +
+            dryColorScore * 0.15 +
+            noVegetationScore * 0.15
+        );
+        
+        // Determine texture type based on comprehensive analysis
         let textureType = 'normal';
-        if (crackingScore > 0.4) {
+        let confidence = 'low';
+        
+        if (crackingScore > 0.6 || (connectedCracks > 10 && dryColorRatio > 0.5)) {
+            textureType = 'severely_cracked';
+            confidence = 'high';
+        } else if (crackingScore > 0.4 || (polygonRatio > 0.01 && dryColorRatio > 0.4)) {
             textureType = 'cracked';
-        } else if (greenRatio > 0.2) {
+            confidence = 'medium';
+        } else if (greenRatio > 0.15) {
             textureType = 'moist';
-        } else if (brownRatio > 0.4) {
-            textureType = 'loamy';
-        } else if (grayRatio > 0.5) {
-            textureType = 'sandy';
+            confidence = 'high';
+        } else if (brownRatio > 0.3 && greenRatio > 0.05) {
+            textureType = 'healthy_loam';
+            confidence = 'high';
+        } else if (dryColorRatio > 0.6 && crackingScore < 0.2) {
+            textureType = 'dry_sandy';
+            confidence = 'medium';
         }
         
-        console.log('Texture Analysis:', {
-            brownRatio: (brownRatio * 100).toFixed(1) + '%',
-            greenRatio: (greenRatio * 100).toFixed(1) + '%',
-            grayRatio: (grayRatio * 100).toFixed(1) + '%',
-            crackingScore: crackingScore.toFixed(2),
-            textureType
+        console.log('Advanced Texture Analysis:', {
+            textureType,
+            confidence,
+            crackingScore: crackingScore.toFixed(3),
+            scores: {
+                directCracks: directCrackScore.toFixed(3),
+                polygons: polygonScore.toFixed(3),
+                connectivity: connectivityScore.toFixed(3),
+                dryColor: dryColorScore.toFixed(3),
+                vegetation: (1 - noVegetationScore).toFixed(3)
+            },
+            stats: {
+                connectedCracks,
+                crackPixelRatio: (crackPixelRatio * 100).toFixed(2) + '%',
+                dryColorRatio: (dryColorRatio * 100).toFixed(2) + '%',
+                greenRatio: (greenRatio * 100).toFixed(2) + '%'
+            }
         });
         
         resolve({
-            crackingScore: Math.min(crackingScore, 1),
-            contrastScore,
-            roughnessScore: linePatternScore,
-            darkPixelRatio: darkRatio,
+            crackingScore,
+            contrastScore: contrastRatio,
+            polygonScore,
+            connectivityScore,
             brownRatio,
             greenRatio,
-            grayRatio,
-            textureType
+            dryColorRatio,
+            textureType,
+            confidence,
+            connectedCracks
         });
     });
 }
